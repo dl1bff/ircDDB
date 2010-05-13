@@ -81,7 +81,7 @@ public class IRCMessage
 		prefixParsed = true;
 	}
 
-	String getPrefixNick()
+	public String getPrefixNick()
 	{
 		if (!prefixParsed)
 		{
@@ -91,7 +91,7 @@ public class IRCMessage
 		return prefixComponents[0].toString();
 	}
 
-	String getPrefixName()
+	public String getPrefixName()
 	{
 		if (!prefixParsed)
 		{
@@ -101,7 +101,7 @@ public class IRCMessage
 		return prefixComponents[1].toString();
 	}
 
-	String getPrefixHost()
+	public String getPrefixHost()
 	{
 		if (!prefixParsed)
 		{
