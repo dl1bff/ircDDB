@@ -48,7 +48,7 @@ public class IRCClient implements Runnable
 	
 
 	
-	IRCClient(IRCApplication a, String h, int p, String ch, String n, String[] u, String pass)
+	public IRCClient(IRCApplication a, String h, int p, String ch, String n, String[] u, String pass)
 	{
 		recv = null;
 		recvQ = null;

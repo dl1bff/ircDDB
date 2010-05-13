@@ -48,7 +48,7 @@ public class IRCMessageQueue
 	Item last;
 
 
-	IRCMessageQueue()
+	public IRCMessageQueue()
 	{
 		eof = false;
 		first = null;
@@ -56,23 +56,23 @@ public class IRCMessageQueue
 	}
 
 
-	boolean isEOF()
+	public boolean isEOF()
 	{
 		return eof;
 	}
 
-	void signalEOF()
+	public void signalEOF()
 	{
 		eof = true;
 	}
 
-	boolean messageAvailable()
+	public boolean messageAvailable()
 	{
 		return (first != null);
 	}
 
 
-	synchronized IRCMessage getMessage()
+	public synchronized IRCMessage getMessage()
 	{
 		Item k;
 
@@ -98,7 +98,7 @@ public class IRCMessageQueue
 	}
 
 
-	synchronized void putMessage( IRCMessage m )
+	public synchronized void putMessage( IRCMessage m )
 	{
 		Item k = new Item(m);
 

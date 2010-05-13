@@ -26,18 +26,16 @@ package de.mdx.ircDDB;
 public class IRCMessage
 {
 
-	String prefix;
-	String command;
-	String params[];
+	public String prefix;
+	public String command;
+	public String params[];
 
-	int numParams;
+	public int numParams;
 	
 	StringBuffer prefixComponents[];
-	
-	
 	boolean prefixParsed;
 
-	IRCMessage ()
+	public IRCMessage ()
 	{
 		prefix = "";
 		command = "";
