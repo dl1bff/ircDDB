@@ -101,7 +101,7 @@ class IRCProtocol
 		{
 			IRCMessage m = recvQ.getMessage();
 
-			
+		/*	
 			System.out.print("[" + m.prefix + "]" );
 			System.out.print(" [" + m.command +"]" );
 
@@ -110,7 +110,8 @@ class IRCProtocol
 				System.out.print(" [" + m.params[i] + "]" );
 			}
 			System.out.println();
-		
+			*/
+	
 			if (m.command.equals("004"))
 			{
 				if (state == 4)
