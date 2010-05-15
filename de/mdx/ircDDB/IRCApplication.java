@@ -34,6 +34,8 @@ public interface IRCApplication
 	
 	void msgChannel (IRCMessage m);
 	void msgQuery (IRCMessage m);
+
+	void setCurrentNick(String nick);
 	
 	void setSendQ( IRCMessageQueue s );
 	IRCMessageQueue getSendQ ();

@@ -71,6 +71,11 @@ class IRCProtocol
 		// System.out.println("nick: " + k);
 		
 		currentNick = nicks[ k ];
+
+		if (app != null)
+		{
+			app.setCurrentNick(currentNick);
+		}
 	}
 	
 	void setNetworkReady(boolean b)
