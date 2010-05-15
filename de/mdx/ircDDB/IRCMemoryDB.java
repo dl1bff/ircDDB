@@ -93,6 +93,11 @@ public class IRCMemoryDB implements IRCDDBExtApp
 		}
 	
 	}
+
+	public boolean needsDatabaseUpdate()
+	{
+		return true;
+	}
 	
 	public void setCurrentNick (String nick)
 	{
