@@ -73,6 +73,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	SimpleDateFormat parseDateFormat;
 
 	String updateChannel;
+
+	boolean acceptPublicUpdates;
+	IRCMessageQueue publicUpdates;
 	
 	IRCDDBApp(Pattern k, Pattern v, String u, IRCDDBExtApp ea)
 	{
@@ -80,6 +83,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 		sendQ = null;
 		currentServer = null;
+		acceptPublicUpdates = false;
+
+		publicUpdates = new IRCMessageQueue();
+	
 
 		userListReset();
 		
@@ -150,6 +157,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				// currentServer = null;
 				state = 2;  // choose new server
 				timer = 200;
+				acceptPublicUpdates = false;
 			}
 		}
 		
@@ -267,6 +275,21 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		return null;
 	}
 	 
+	void enablePublicUpdates()
+	{
+		acceptPublicUpdates = true;
+
+		while (publicUpdates.messageAvailable())
+		{
+			IRCMessage m = publicUpdates.getMessage();
+
+			String msg = m.params[1];
+
+                        Scanner s = new Scanner(msg);
+
+			processUpdate(s);
+		}
+	}
 	
 	public void msgChannel (IRCMessage m)
 	{
@@ -280,7 +303,14 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			
 			if (s.hasNext(datePattern))
 			{
-				processUpdate(s);
+				if (acceptPublicUpdates)
+				{
+					processUpdate(s);
+				}
+				else
+				{
+					publicUpdates.putMessage(m);
+				}
 			}
 			else
 			{
@@ -459,6 +489,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					q.putMessage(m2);
 				}
 			}
+
+			enablePublicUpdates();
 		}
 		else if (command.equals("LIST_MORE"))
 		{
@@ -599,6 +631,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 								q.putMessage(m);
 							}
 						}	
+						else
+						{
+							enablePublicUpdates();
+						}
 					}
 					else if (timer == 0)
 					{
@@ -630,6 +666,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				// disconnect db
 				state = 0;
 				timer = 0;
+				acceptPublicUpdates = false;
 				break;
 			
 			}
