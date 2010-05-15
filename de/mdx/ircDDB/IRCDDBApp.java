@@ -195,6 +195,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			{
 				currentServer = u.nick;
 				found = true;
+				if (extApp != null) 
+				{
+					extApp.setCurrentServerNick(currentServer);
+				}
 				break;
 			}
 		}

@@ -57,6 +57,7 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 
 	public boolean needsDatabaseUpdate();
 
+	public void setCurrentServerNick(String nick);
 }
 
 
