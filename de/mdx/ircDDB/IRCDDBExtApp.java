@@ -55,6 +55,8 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 
 	public DatabaseObject getLastEntry();
 
+	public boolean needsDatabaseUpdate();
+
 }
 
 

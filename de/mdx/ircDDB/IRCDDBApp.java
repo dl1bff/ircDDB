@@ -458,7 +458,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		}
 		else if (command.equals("LIST_MORE"))
 		{
-			if (extApp != null)
+			if ((extApp != null) && extApp.needsDatabaseUpdate())
 			{
 				IRCMessage m2 = new IRCMessage(
 					currentServer, "SENDLIST " + getLastEntryTime());
@@ -579,19 +579,22 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				{	
 					if (findServerUser())
 					{
-					
 						state = 3;
-						IRCMessage m = new IRCMessage();
-						m.command = "PRIVMSG";
-						m.numParams = 2;
-						m.params[0] = currentServer;
-						m.params[1] = "SENDLIST " + getLastEntryTime();
-						
-						IRCMessageQueue q = getSendQ();
-						if (q != null)
+
+						if ((extApp != null) && extApp.needsDatabaseUpdate())
 						{
-							q.putMessage(m);
-						}
+							IRCMessage m = new IRCMessage();
+							m.command = "PRIVMSG";
+							m.numParams = 2;
+							m.params[0] = currentServer;
+							m.params[1] = "SENDLIST " + getLastEntryTime();
+							
+							IRCMessageQueue q = getSendQ();
+							if (q != null)
+							{
+								q.putMessage(m);
+							}
+						}	
 					}
 					else if (timer == 0)
 					{
