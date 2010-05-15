@@ -391,7 +391,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						
 					if ((dbDate != null) && (extApp != null))
 					{
-						final int NUM_ENTRIES = 4;
+						final int NUM_ENTRIES = 20;
 
 						LinkedList<IRCDDBExtApp.DatabaseObject> l = 
 							extApp.getDatabaseObjects( dbDate, NUM_ENTRIES );
