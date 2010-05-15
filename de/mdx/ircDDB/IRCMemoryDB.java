@@ -103,6 +103,10 @@ public class IRCMemoryDB implements IRCDDBExtApp
 	{
 	}
 
+	public void setCurrentServerNick (String nick)
+	{
+	}
+
 	
 	public void userJoin (String nick, String name, String host)
 	{
