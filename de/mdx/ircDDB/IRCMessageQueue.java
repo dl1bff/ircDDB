@@ -66,7 +66,7 @@ public class IRCMessageQueue
 		eof = true;
 	}
 
-	public boolean messageAvailable()
+	public synchronized boolean messageAvailable()
 	{
 		return (first != null);
 	}

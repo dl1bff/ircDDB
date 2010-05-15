@@ -49,7 +49,7 @@ public class IRCMessage
 
 	public IRCMessage (String toNick, String msg)
 	{
-		super();
+		this();
 		
 		command = "PRIVMSG";
 		numParams = 2;

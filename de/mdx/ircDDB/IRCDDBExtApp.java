@@ -25,6 +25,7 @@ package de.mdx.ircDDB;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 
 public interface IRCDDBExtApp extends IRCApplication, Runnable
@@ -44,7 +45,8 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 		public DatabaseObject oldObj;
 	}
 
-	public void setParams( Properties p );
+	public void setParams( Properties p,
+		Pattern keyPattern, Pattern valuePattern );
 
 	public UpdateResult dbUpdate( Date d, String key, String value );
 
