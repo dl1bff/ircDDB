@@ -46,9 +46,12 @@ public class IRCClient implements Runnable
 	int port;
 	IRCProtocol proto;
 	
+	boolean debug;
 
 	
-	public IRCClient(IRCApplication a, String h, int p, String ch, String n, String[] u, String pass)
+	public IRCClient(IRCApplication a, String h, int p, String ch,
+		 String n, String[] u, String pass,
+		 boolean dbg)
 	{
 		recv = null;
 		recvQ = null;
@@ -60,8 +63,10 @@ public class IRCClient implements Runnable
 		
 		host = h;
 		port = p;
+
+		debug = dbg;
 		
-		proto = new IRCProtocol(a, ch, n, u, pass);
+		proto = new IRCProtocol(a, ch, n, u, pass, debug);
 		
 	}
 
@@ -134,6 +139,7 @@ public class IRCClient implements Runnable
 		if (app != null)
 		{
 			app.setSendQ(null);
+			app.userListReset();
 		}
 
 		if (socket != null)
@@ -213,7 +219,7 @@ public class IRCClient implements Runnable
 
 						try
 						{
-							m.writeMessage(outputStream);
+							m.writeMessage(outputStream, debug);
 						}
 						catch(IOException e)
 						{

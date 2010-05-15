@@ -46,6 +46,16 @@ public class IRCMessage
 		
 		prefixComponents = new StringBuffer[3];
 	}
+
+	public IRCMessage (String toNick, String msg)
+	{
+		super();
+		
+		command = "PRIVMSG";
+		numParams = 2;
+		params[0] = toNick;
+		params[1] = msg;
+	}
 	
 	void parsePrefix()
 	{
@@ -111,19 +121,21 @@ public class IRCMessage
 		return prefixComponents[2].toString();
 	}
 
-	void writeMessage ( java.io.OutputStream os ) throws java.io.IOException
+	void writeMessage ( java.io.OutputStream os, boolean debug ) throws java.io.IOException
 	{
 
-		/*
-		  System.out.print("SEND: [" + prefix + "]" );
-                                        System.out.print(" [" + command +"]" );
+		if (debug)
+		{
+			System.out.print("T [" + prefix + "]" );
 
-                                        for (int i=0; i < numParams; i++)
-                                        {
-                                            System.out.print(" [" + params[i] + "]" );
-                                        }
-                                        System.out.println();
-		*/
+                        System.out.print(" [" + command +"]" );
+
+                        for (int i=0; i < numParams; i++)
+                        {
+                        	System.out.print(" [" + params[i] + "]" );
+                        }
+                        System.out.println();
+		}
 
 		java.io.PrintWriter p = new java.io.PrintWriter(os);
 

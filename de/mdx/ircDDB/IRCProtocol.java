@@ -41,8 +41,10 @@ class IRCProtocol
 	Random r;
 	
 	IRCApplication app;
+
+	boolean debug;
 	
-	IRCProtocol(IRCApplication a, String ch, String n, String[] u, String pass)
+	IRCProtocol(IRCApplication a, String ch, String n, String[] u, String pass, boolean dbg)
 	{
 	
 		app = a;
@@ -54,7 +56,8 @@ class IRCProtocol
 		
 		state = 0;
 		timer = 0;
-		pingTimer = 60;
+		pingTimer = 60; // 30 seconds
+		debug = dbg;
 		
 		r = new Random();
 		chooseNewNick();
@@ -101,16 +104,17 @@ class IRCProtocol
 		{
 			IRCMessage m = recvQ.getMessage();
 
-		/*	
-			System.out.print("[" + m.prefix + "]" );
-			System.out.print(" [" + m.command +"]" );
-
-			for (int i=0; i < m.numParams; i++)
+			if (debug)
 			{
-				System.out.print(" [" + m.params[i] + "]" );
+				System.out.print("R [" + m.prefix + "]" );
+				System.out.print(" [" + m.command +"]" );
+
+				for (int i=0; i < m.numParams; i++)
+				{
+					System.out.print(" [" + m.params[i] + "]" );
+				}
+				System.out.println();
 			}
-			System.out.println();
-			*/
 	
 			if (m.command.equals("004"))
 			{
@@ -341,7 +345,7 @@ class IRCProtocol
 				m.params[0] = currentNick;
 				sendQ.putMessage(m);
 				
-				timer = 10;
+				timer = pingTimer; 
 				state = 12; // wait for pong
 			}
 			break;

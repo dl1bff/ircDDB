@@ -30,6 +30,7 @@ public interface IRCApplication
 	void userJoin (String nick, String name, String host);
 	void userLeave (String nick);
 	void userChanOp (String nick, boolean op);
+	void userListReset();
 	
 	void msgChannel (IRCMessage m);
 	void msgQuery (IRCMessage m);
