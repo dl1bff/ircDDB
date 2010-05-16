@@ -240,7 +240,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 			return o.dbDate;
 		}
 		
-		return new Date(0);
+		return new Date(950000000000L); // February 2000
 	}
 
 	public LinkedList<IRCDDBExtApp.DatabaseObject> getDatabaseObjects(
