@@ -562,17 +562,15 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		if (extApp != null)
 		{
 
-			IRCDDBExtApp.DatabaseObject obj;
+			Date d = extApp.getLastEntryDate();
 
-			obj = extApp.getLastEntry();
-
-			if (obj != null)
+			if (d != null)
 			{
-				return parseDateFormat.format( obj.modTime );
+				return parseDateFormat.format( d );
 			}
 		}
 		
-		return "2000-01-01 10:00:00";
+		return "DBERROR";
 	}
 	
 	

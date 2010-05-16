@@ -220,7 +220,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 		return l;
 	}
 	
-	public IRCDDBExtApp.DatabaseObject getLastEntry()
+	public Date getLastEntryDate()
 	{
 		LinkedList<DbObject> l = getSortedDbEntries();
 
@@ -235,20 +235,12 @@ public class IRCMemoryDB implements IRCDDBExtApp
 			o = null;
 		}
 			
-		
 		if (o != null)
 		{
-			IRCDDBExtApp.DatabaseObject obj;
-
-			obj = new IRCDDBExtApp.DatabaseObject();
-			obj.modTime = o.dbDate;
-			obj.key = o.key;
-			obj.value = o.value;
-
-			return obj;
+			return o.dbDate;
 		}
 		
-		return null;
+		return new Date(0);
 	}
 
 	public LinkedList<IRCDDBExtApp.DatabaseObject> getDatabaseObjects(

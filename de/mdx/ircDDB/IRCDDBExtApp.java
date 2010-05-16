@@ -53,7 +53,7 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 	public LinkedList<DatabaseObject> getDatabaseObjects( 
 		Date beginDate, int numberOfObjects );
 
-	public DatabaseObject getLastEntry();
+	public Date getLastEntryDate();
 
 	public boolean needsDatabaseUpdate();
 
