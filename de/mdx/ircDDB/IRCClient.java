@@ -51,7 +51,7 @@ public class IRCClient implements Runnable
 	
 	public IRCClient(IRCApplication a, String h, int p, String ch,
 		 String n, String[] u, String pass,
-		 boolean dbg)
+		 boolean dbg, String version)
 	{
 		recv = null;
 		recvQ = null;
@@ -66,8 +66,7 @@ public class IRCClient implements Runnable
 
 		debug = dbg;
 		
-		proto = new IRCProtocol(a, ch, n, u, pass, debug);
-		
+		proto = new IRCProtocol(a, ch, n, u, pass, debug, version);
 	}
 
 	boolean init()

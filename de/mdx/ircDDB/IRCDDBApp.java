@@ -708,6 +708,24 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	public static void main (String args[])
 	{
 
+		String version = "";
+		Package pkg;
+
+		pkg = Package.getPackage("de.mdx.ircDDB");
+
+
+		if (pkg != null)
+		{
+
+			String v = pkg.getImplementationVersion();
+
+			if (v != null)
+			{
+				version = "ircDDB:" + v ;
+			}
+		}
+
+
 		
 		Properties properties = new Properties();
 
@@ -783,6 +801,38 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				Thread extappthr = new Thread(extApp);
 
 		                extappthr.start();
+
+				pkg = extApp.getClass().getPackage();
+
+				if (pkg != null)
+				{
+
+					String v = pkg.getImplementationVersion();
+
+					if (v != null)
+					{
+						String classname = extApp.getClass().getName();
+						int pos = classname.lastIndexOf('.');
+
+						if (pos < 0)
+						{
+							pos = 0;
+						}
+						else
+						{
+							pos ++;
+						}
+
+						if (version.length() > 0)
+						{
+							version = version + " ";
+						}
+
+						version = version + classname.substring(pos) +
+							":" + v ;
+					}
+				}
+
 				
 			}
 			catch (Exception e)
@@ -806,7 +856,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			Integer.parseInt(properties.getProperty("irc_server_port", "9007")),
 			irc_channel,
 			irc_name, n,
-			properties.getProperty("irc_password", "secret"), debug);
+			properties.getProperty("irc_password", "secret"), debug,
+			version);
 
 		
 

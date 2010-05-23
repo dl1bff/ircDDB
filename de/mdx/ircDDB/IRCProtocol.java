@@ -43,8 +43,10 @@ class IRCProtocol
 	IRCApplication app;
 
 	boolean debug;
+	String version;
 	
-	IRCProtocol(IRCApplication a, String ch, String n, String[] u, String pass, boolean dbg)
+	IRCProtocol(IRCApplication a, String ch, String n, String[] u, String pass,
+		 boolean dbg, String v)
 	{
 	
 		app = a;
@@ -61,6 +63,8 @@ class IRCProtocol
 		
 		r = new Random();
 		chooseNewNick();
+
+		version = v;
 	}
 
 	
@@ -283,7 +287,7 @@ class IRCProtocol
 				m.params[0] = name;
 				m.params[1] = "0";
 				m.params[2] = "*";
-				m.params[3] = name;
+				m.params[3] = version;
 				sendQ.putMessage(m);
 				
 				timer = 30;
