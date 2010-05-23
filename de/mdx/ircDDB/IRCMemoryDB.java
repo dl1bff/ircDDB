@@ -61,6 +61,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 
 	String bootFile;
 
+	IRCMessageQueue sendQ;
 	
 	public IRCMemoryDB()
 	{
@@ -71,6 +72,8 @@ public class IRCMemoryDB implements IRCDDBExtApp
 
 		parseDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 parseDateFormat.setTimeZone( TimeZone.getTimeZone("GMT"));
+
+		sendQ = null;
 	}
 		
 	public void setParams( Properties p, Pattern keyPattern, Pattern valuePattern )
@@ -104,6 +107,10 @@ public class IRCMemoryDB implements IRCDDBExtApp
 	}
 
 	public void setCurrentServerNick (String nick)
+	{
+	}
+
+	public void setTopic (String topic)
 	{
 	}
 
@@ -190,11 +197,12 @@ public class IRCMemoryDB implements IRCDDBExtApp
 	
 	public synchronized void setSendQ( IRCMessageQueue s )
 	{
+		sendQ = s;
 	}
 	
 	public synchronized IRCMessageQueue getSendQ ()
 	{
-		return null;
+		return sendQ;
 	}
 	
 	
@@ -363,6 +371,8 @@ public class IRCMemoryDB implements IRCDDBExtApp
 				}
 
 				p.close();
+
+				
 			}
 			catch (IOException e)
 			{

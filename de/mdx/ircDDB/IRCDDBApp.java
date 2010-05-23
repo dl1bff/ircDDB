@@ -74,6 +74,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	String updateChannel;
 
+	String channelTopic;
+
 	boolean acceptPublicUpdates;
 	IRCMessageQueue publicUpdates;
 	
@@ -104,6 +106,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 		updateChannel = u;
 		
+		channelTopic = "";
 	}
 	
 	
@@ -183,6 +186,15 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		}
 	}
 
+	public void setTopic(String topic)
+	{
+		channelTopic = topic;
+
+		if (extApp != null)
+		{
+			extApp.setTopic(topic);
+		}
+	}
 	
 	
 	boolean findServerUser()

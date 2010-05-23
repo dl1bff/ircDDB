@@ -241,7 +241,16 @@ class IRCProtocol
 					timer = 10; // wait 5 seconds..
 				}
 			}
+			else if (m.command.equals("332") ||
+					m.command.equals("TOPIC"))  // topic
+			{
+				if ((m.numParams == 2) && (app != null) &&
+					m.params[0].equals(channel) )
 
+				{
+					app.setTopic(m.params[1]);
+				}
+			}
 		}
 		
 		IRCMessage m;
