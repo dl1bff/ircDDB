@@ -155,12 +155,19 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		
 		if (currentServer != null)
 		{
-			if (currentServer.equals(nick))
+			UserObject me = user.get( myNick );
+
+			if ((me == null) || (me.op == false))  
 			{
-				// currentServer = null;
-				state = 2;  // choose new server
-				timer = 200;
-				acceptPublicUpdates = false;
+				// if I am not op, then look for new server
+
+				if (currentServer.equals(nick))
+				{
+					// currentServer = null;
+					state = 2;  // choose new server
+					timer = 200;
+					acceptPublicUpdates = false;
+				}
 			}
 		}
 		
