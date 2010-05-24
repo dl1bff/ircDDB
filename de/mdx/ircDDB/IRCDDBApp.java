@@ -540,6 +540,16 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				}
 			}
 		}
+		else if (command.equals("QUIT_NOW"))
+		{
+			UserObject other = user.get(m.getPrefixNick()); // nick of other user
+
+			if ((other != null) && other.op
+                                && other.nick.startsWith("u-"))
+                        {
+				System.exit(0);
+			}
+		}
 		else
 		{
 			if (extApp != null)
