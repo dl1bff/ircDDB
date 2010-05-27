@@ -364,7 +364,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			UserObject other = user.get(m.getPrefixNick()); // nick of other user
 			
 			if (s.hasNext(datePattern)  &&
-				(other != null) && other.nick.startsWith("d-"))
+				(other != null) && !other.nick.startsWith("u-"))
 			{
 				IRCDDBExtApp.UpdateResult result = processUpdate(s);
 				
