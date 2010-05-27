@@ -554,7 +554,20 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			if ((other != null) && other.op
                                 && other.nick.startsWith("u-"))
                         {
-				System.exit(0);
+
+				IRCMessage m2 = new IRCMessage();
+				m2.command = "QUIT";
+				m2.numParams = 1;
+				m2.params[0] = "QUIT_NOW sent by "+other.nick;
+
+				IRCMessageQueue q = getSendQ();
+				if (q != null)
+				{
+					q.putMessage(m2);
+				}
+
+				timer = 3;
+				state = 11;  // exit
 			}
 		}
 		else
@@ -670,7 +683,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						IRCMessage m = new IRCMessage();
 						m.command = "QUIT";
 						m.numParams = 1;
-						m.params[0] = "ENUMSERVER (num < 2)";
+						m.params[0] = "no op user with 's-' found.";
 						
 						IRCMessageQueue q = getSendQ();
 						if (q != null)
@@ -696,7 +709,14 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				acceptPublicUpdates = false;
 				break;
 			
+			case 11:
+				if (timer == 0)
+				{
+					System.exit(0);
+				}
+				break;
 			}
+
 			
 			
 			try
