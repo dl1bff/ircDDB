@@ -381,7 +381,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 							long newMillis = result.newObj.modTime.getTime();
 							long oldMillis = result.oldObj.modTime.getTime();
 							
-							if (newMillis > (oldMillis + 300000))  // update max. every 5 min
+							if (newMillis > (oldMillis + 2400000))  // update max. every 40 min
 							{
 								sendUpdate = true;
 							}
