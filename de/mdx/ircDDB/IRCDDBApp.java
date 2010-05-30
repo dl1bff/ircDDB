@@ -78,8 +78,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	boolean acceptPublicUpdates;
 	IRCMessageQueue publicUpdates;
+
+	String dumpUserDBFileName;
 	
-	IRCDDBApp(Pattern k, Pattern v, String u, IRCDDBExtApp ea)
+	IRCDDBApp(Pattern k, Pattern v, String u, IRCDDBExtApp ea,
+			String dumpFileName)
 	{
 		extApp = ea;
 
@@ -107,6 +110,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		updateChannel = u;
 		
 		channelTopic = "";
+
+		dumpUserDBFileName = dumpFileName;
 	}
 	
 	
@@ -621,6 +626,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	
 	public void run()
 	{
+
+		int dumpUserDBTimer = 60;
 		
 		while (true)
 		{
@@ -730,6 +737,42 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			{
 				System.out.println(e);
 			}
+
+
+			if (!dumpUserDBFileName.equals("none"))
+			{
+			if (dumpUserDBTimer <= 0)
+			{
+				dumpUserDBTimer = 300;
+
+				try
+				{
+					PrintWriter p = new PrintWriter(
+						new FileOutputStream(dumpUserDBFileName));
+
+					Collection<UserObject> c = user.values();
+
+					for (UserObject o : c)
+					{
+						p.println(o.nick + " " + o.name +
+							" " + o.host + " " + o.op);
+					}
+
+					p.close();
+
+
+				}
+				catch (IOException e)
+				{
+					System.out.println("dumpDb failed " + e);
+				}
+
+			}
+			else
+			{
+				dumpUserDBTimer --;
+			}
+			} // if (!dumpUserDBFileName.equals("none"))
 		}
 	}
 	
@@ -885,7 +928,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		String irc_channel = properties.getProperty("irc_channel", "#chat");
 		
 		IRCDDBApp app = new IRCDDBApp (keyPattern, valuePattern,
-			irc_channel, extApp );
+			irc_channel, extApp,
+			properties.getProperty("dump_userdb_filename", "none") );
 		
 		Thread appthr = new Thread(app);
 		
