@@ -3,6 +3,7 @@
 class-files:
 	javac net/ircDDB/*.java
 
+x: ircDDB2.jar
 
 ircDDB2.jar: class-files
 	./mk_manifest.sh

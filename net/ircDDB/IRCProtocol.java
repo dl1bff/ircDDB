@@ -157,13 +157,17 @@ class IRCProtocol
 					    state = 10; // next: WHO *
 					  }
 					}
-					else if (m.getPrefixNick().equals(currentNick) && (state == 8))
-					{
-						state = 10; // next: WHO *
-					}
 					else if (app != null)
 					{
 						app.userJoin( m.getPrefixNick(), m.getPrefixName(), m.getPrefixHost());
+					}
+				}
+
+				if ((m.numParams >= 1) && m.params[0].equals(debugChannel))
+				{
+					if (m.getPrefixNick().equals(currentNick) && (state == 8))
+					{
+						state = 10; // next: WHO *
 					}
 				}
 			}
