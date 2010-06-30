@@ -62,6 +62,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 	String bootFile;
 
 	IRCMessageQueue sendQ;
+
 	
 	public IRCMemoryDB()
 	{
@@ -176,9 +177,10 @@ public class IRCMemoryDB implements IRCDDBExtApp
 					{
 						String value = s.next(valuePattern);
 						
-						DbObject o = new DbObject( dbDate, key, value );
-						
-						db.put(key, o);
+						// DbObject o = new DbObject( dbDate, key, value );
+						// db.put(key, o);
+
+						dbUpdate( dbDate, key, value );
 					}
 				}
 			}
@@ -329,7 +331,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 
 		if (d.getTime() > (nowDate.getTime() + 300000))
 		{
-			// System.out.println("new entry more than 5 min in future");
+			Dbg.println(Dbg.WARN, "new entry more than 5 min in future - ignoring");
 			return null;
 		}
 

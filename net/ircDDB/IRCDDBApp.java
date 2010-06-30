@@ -73,6 +73,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	SimpleDateFormat parseDateFormat;
 
 	String updateChannel;
+	String debugChannel;
 
 	String channelTopic;
 
@@ -80,9 +81,12 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	IRCMessageQueue publicUpdates;
 
 	String dumpUserDBFileName;
+
+	IRCDDBEntryValidator entryValidator;
 	
-	IRCDDBApp(Pattern k, Pattern v, String u, IRCDDBExtApp ea,
-			String dumpFileName)
+	IRCDDBApp(Pattern k, Pattern v, String u_chan, String dbg_chan,
+		IRCDDBEntryValidator e,
+		IRCDDBExtApp ea, String dumpFileName)
 	{
 		extApp = ea;
 
@@ -107,11 +111,14 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		keyPattern = k;
 		valuePattern = v;
 
-		updateChannel = u;
+		updateChannel = u_chan;
+		debugChannel = dbg_chan;
 		
 		channelTopic = "";
 
 		dumpUserDBFileName = dumpFileName;
+
+		entryValidator = e;
 	}
 	
 	
@@ -256,7 +263,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	}
 	
 
-	IRCDDBExtApp.UpdateResult processUpdate ( Scanner s)
+	IRCDDBExtApp.UpdateResult processUpdate ( Scanner s, String ircUser )
 	{
 		if (s.hasNext(datePattern))
 		{
@@ -286,8 +293,19 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					if (s.hasNext(valuePattern))
 					{
 						String value = s.next(valuePattern);
-						
-						if (extApp != null)
+
+						boolean valid = false;
+
+						if (entryValidator == null)
+						{
+						  valid = true;  // no entry validator loaded
+						}
+						else
+						{
+						  valid = entryValidator.isValid( key, value, ircUser );
+						}
+
+						if ((extApp != null) && valid)
 						{
 							return extApp.dbUpdate( dbDate, key, value );
 						}
@@ -311,7 +329,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
                         Scanner s = new Scanner(msg);
 
-			processUpdate(s);
+			processUpdate(s, null);
 		}
 	}
 	
@@ -329,7 +347,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			{
 				if (acceptPublicUpdates)
 				{
-					processUpdate(s);
+					processUpdate(s, null); 
 				}
 				else
 				{
@@ -369,9 +387,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			UserObject other = user.get(m.getPrefixNick()); // nick of other user
 			
 			if (s.hasNext(datePattern)  &&
-				(other != null) && !other.nick.startsWith("u-"))
+				(other != null))
 			{
-				IRCDDBExtApp.UpdateResult result = processUpdate(s);
+				IRCDDBExtApp.UpdateResult result = processUpdate(s, other.nick);
 				
 				if (result != null)
 				{
@@ -419,6 +437,39 @@ public class IRCDDBApp implements IRCApplication, Runnable
 							q.putMessage(m2);
 						}
 					}
+
+				     if (debugChannel != null)
+				     {
+				       IRCMessage m2 = new IRCMessage();
+				       m2.command = "PRIVMSG";
+				       m2.numParams = 2;
+				       m2.params[0] = debugChannel;
+				       m2.params[1] = m.getPrefixNick() + ": UPDATE OK: " + msg;
+
+				       IRCMessageQueue q = getSendQ();
+				       if (q != null)
+				       {
+					  q.putMessage(m2);
+				       }
+				     }
+				}
+				else
+				{
+				   if (debugChannel != null)
+				   {
+				     IRCMessage m2 = new IRCMessage();
+				     m2.command = "PRIVMSG";
+				     m2.numParams = 2;
+				     m2.params[0] = debugChannel;
+				     m2.params[1] = m.getPrefixNick() + ": UPDATE ERROR: " + msg;
+
+				     IRCMessageQueue q = getSendQ();
+				     if (q != null)
+				     {
+					q.putMessage(m2);
+				     }
+				   }
+
 				}
 			}
 			
@@ -924,11 +975,47 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				System.exit(1);
 			}
 		}
+
+
+		String entryValidatorName = properties.getProperty("db_entry_validator", "none");
+		IRCDDBEntryValidator validator = null;
+
+		if (!entryValidatorName.equals("none"))
+		{
+		  try
+		  {
+		    Class entryValidatorClass =
+		      Class.forName(entryValidatorName);
+
+		    validator = (IRCDDBEntryValidator) entryValidatorClass.newInstance();
+
+		    validator.setParams( properties );
+
+		  }
+		  catch (Exception e)
+		  {
+		    Dbg.println(Dbg.ERR, "entry validator: " + e);
+		    System.exit(1);
+		  }
+		}
+
 		
 		String irc_channel = properties.getProperty("irc_channel", "#chat");
+		String debug_channel = properties.getProperty("debug_channel", "none");
+
+		if (irc_channel.equals(debug_channel))
+		{
+		  Dbg.println(Dbg.ERR, "irc_channel and debug_channel must not have same value");
+		  System.exit(1);
+		}
+
+		if (debug_channel.equals("none"))
+		{
+		  debug_channel = null;
+		}
 		
 		IRCDDBApp app = new IRCDDBApp (keyPattern, valuePattern,
-			irc_channel, extApp,
+			irc_channel, debug_channel, validator, extApp,
 			properties.getProperty("dump_userdb_filename", "none") );
 		
 		Thread appthr = new Thread(app);
@@ -938,7 +1025,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		IRCClient irc = new IRCClient( app,
 			properties.getProperty("irc_server_name", "localhost"),
 			Integer.parseInt(properties.getProperty("irc_server_port", "9007")),
-			irc_channel,
+			irc_channel, debug_channel,
 			irc_name, n,
 			properties.getProperty("irc_password", "secret"), debug,
 			version);

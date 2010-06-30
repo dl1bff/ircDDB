@@ -32,6 +32,7 @@ class IRCProtocol
 	String nicks[];
 	String password;
 	String channel;
+	String debugChannel;
 	String currentNick;
 	
 	int state;
@@ -45,7 +46,7 @@ class IRCProtocol
 	boolean debug;
 	String version;
 	
-	IRCProtocol(IRCApplication a, String ch, String n, String[] u, String pass,
+	IRCProtocol(IRCApplication a, String ch, String dbg_chan, String n, String[] u, String pass,
 		 boolean dbg, String v)
 	{
 	
@@ -55,6 +56,7 @@ class IRCProtocol
 		nicks = u;
 		password = pass;
 		channel = ch;
+		debugChannel = dbg_chan;
 		
 		state = 0;
 		timer = 0;
@@ -145,6 +147,17 @@ class IRCProtocol
 				if ((m.numParams >= 1) && m.params[0].equals(channel))
 				{
 					if (m.getPrefixNick().equals(currentNick) && (state == 6))
+					{
+					  if (debugChannel != null)
+					  {
+					    state = 7;  // next: join debug_channel
+					  }
+					  else
+					  {
+					    state = 10; // next: WHO *
+					  }
+					}
+					else if (m.getPrefixNick().equals(currentNick) && (state == 8))
 					{
 						state = 10; // next: WHO *
 					}
@@ -336,7 +349,31 @@ class IRCProtocol
 				return false;
 			}
 			break;
+
+		case 7:
+			if (debugChannel == null)
+			{
+			  return false; // this state cannot be processed if there is no debug_channel
+			}
+
+			m = new IRCMessage();
+			m.command = "JOIN";
+			m.numParams = 1;
+			m.params[0] = debugChannel;
+			sendQ.putMessage(m);
 			
+			timer = 30;
+			state = 8; // wait for join message
+			break;
+			
+		case 8:
+			if (timer == 0)
+			{
+				// no join message received -> disconnect
+				return false;
+			}
+			break;
+
 		case 10:
 			m = new IRCMessage();
 			m.command = "WHO";
