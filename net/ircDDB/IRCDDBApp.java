@@ -786,7 +786,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			}
 			catch ( InterruptedException e )
 			{
-				System.out.println(e);
+				Dbg.println(Dbg.WARN, "sleep interrupted " + e);
 			}
 
 
@@ -815,7 +815,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				}
 				catch (IOException e)
 				{
-					System.out.println("dumpDb failed " + e);
+					Dbg.println(Dbg.WARN, "dumpDb failed " + e);
 				}
 
 			}
@@ -872,6 +872,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			System.out.println("could not open file 'ircDDB.properties'");
 			System.exit(1);
 		} 
+
+		Dbg.setDebugLevel(Integer.parseInt(properties.getProperty("debug_level", "35")));
+		Dbg.println(Dbg.INFO, "Start");
 		
 		String irc_nick = properties.getProperty("irc_nick", "guest");
 		String rptr_call = properties.getProperty("rptr_call", "nocall");
@@ -914,7 +917,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		}
 		catch (PatternSyntaxException e)
 		{
-			System.out.println("pattern syntax error " + e);
+			Dbg.println(Dbg.ERR, "pattern syntax error " + e);
 			System.exit(1);
 		} 
 
@@ -971,7 +974,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			}
 			catch (Exception e)
 			{
-				System.out.println("external application: " + e);
+				Dbg.println(Dbg.ERR, "external application: " + e);
 				System.exit(1);
 			}
 		}
@@ -999,6 +1002,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		  }
 		}
 
+
 		
 		String irc_channel = properties.getProperty("irc_channel", "#chat");
 		String debug_channel = properties.getProperty("debug_channel", "none");
@@ -1013,6 +1017,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		{
 		  debug_channel = null;
 		}
+
+		Dbg.println(Dbg.INFO, "Version " + version);
 		
 		IRCDDBApp app = new IRCDDBApp (keyPattern, valuePattern,
 			irc_channel, debug_channel, validator, extApp,
