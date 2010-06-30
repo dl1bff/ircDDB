@@ -20,7 +20,7 @@
 # 
 
 echo "Manifest-Version: 1.0" > ircDDB.manifest
-echo "Main-Class: de.mdx.ircDDB.IRCDDBApp" >> ircDDB.manifest
+echo "Main-Class: net.ircDDB.IRCDDBApp" >> ircDDB.manifest
 echo "Specification-Title: ircDDB" >> ircDDB.manifest
 echo "Specification-Version: 1.0" >> ircDDB.manifest
 echo "Specification-Vendor: dl1bff@mdx.de" >> ircDDB.manifest
