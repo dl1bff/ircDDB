@@ -46,9 +46,9 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 	}
 
 	public void setParams( Properties p,
-		Pattern keyPattern, Pattern valuePattern );
+		Pattern keyPattern, Pattern valuePattern, IRCDDBEntryValidator v );
 
-	public UpdateResult dbUpdate( Date d, String key, String value );
+	public UpdateResult dbUpdate( Date d, String key, String value, String ircUser );
 
 	public LinkedList<DatabaseObject> getDatabaseObjects( 
 		Date beginDate, int numberOfObjects );

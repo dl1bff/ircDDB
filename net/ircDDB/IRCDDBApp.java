@@ -82,10 +82,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	String dumpUserDBFileName;
 
-	IRCDDBEntryValidator entryValidator;
 	
 	IRCDDBApp(Pattern k, Pattern v, String u_chan, String dbg_chan,
-		IRCDDBEntryValidator e,
 		IRCDDBExtApp ea, String dumpFileName)
 	{
 		extApp = ea;
@@ -118,7 +116,6 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 		dumpUserDBFileName = dumpFileName;
 
-		entryValidator = e;
 	}
 	
 	
@@ -323,20 +320,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					{
 						String value = s.next(valuePattern);
 
-						boolean valid = false;
-
-						if (entryValidator == null)
+						if (extApp != null)
 						{
-						  valid = true;  // no entry validator loaded
-						}
-						else
-						{
-						  valid = entryValidator.isValid( key, value, ircUser );
-						}
-
-						if ((extApp != null) && valid)
-						{
-							return extApp.dbUpdate( dbDate, key, value );
+							return extApp.dbUpdate( dbDate, key, value, ircUser );
 						}
 					}
 				}
@@ -950,6 +936,28 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			System.exit(1);
 		} 
 
+		String entryValidatorName = properties.getProperty("db_entry_validator", "none");
+		IRCDDBEntryValidator validator = null;
+
+		if (!entryValidatorName.equals("none"))
+		{
+		  try
+		  {
+		    Class entryValidatorClass =
+		      Class.forName(entryValidatorName);
+
+		    validator = (IRCDDBEntryValidator) entryValidatorClass.newInstance();
+
+		    validator.setParams( properties );
+
+		  }
+		  catch (Exception e)
+		  {
+		    Dbg.println(Dbg.ERR, "entry validator: " + e);
+		    System.exit(1);
+		  }
+		}
+
 		String extAppName = properties.getProperty("ext_app", "none");
 		IRCDDBExtApp extApp = null;
 
@@ -962,7 +970,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 				extApp = (IRCDDBExtApp) extAppClass.newInstance();
 
-				extApp.setParams( properties, keyPattern, valuePattern );
+				extApp.setParams( properties, keyPattern, valuePattern, validator );
 
 				Thread extappthr = new Thread(extApp);
 
@@ -1009,27 +1017,6 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		}
 
 
-		String entryValidatorName = properties.getProperty("db_entry_validator", "none");
-		IRCDDBEntryValidator validator = null;
-
-		if (!entryValidatorName.equals("none"))
-		{
-		  try
-		  {
-		    Class entryValidatorClass =
-		      Class.forName(entryValidatorName);
-
-		    validator = (IRCDDBEntryValidator) entryValidatorClass.newInstance();
-
-		    validator.setParams( properties );
-
-		  }
-		  catch (Exception e)
-		  {
-		    Dbg.println(Dbg.ERR, "entry validator: " + e);
-		    System.exit(1);
-		  }
-		}
 
 
 		
@@ -1050,7 +1037,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		Dbg.println(Dbg.INFO, "Version " + version);
 		
 		IRCDDBApp app = new IRCDDBApp (keyPattern, valuePattern,
-			irc_channel, debug_channel, validator, extApp,
+			irc_channel, debug_channel, extApp,
 			properties.getProperty("dump_userdb_filename", "none") );
 		
 		Thread appthr = new Thread(app);

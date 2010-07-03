@@ -63,6 +63,8 @@ public class IRCMemoryDB implements IRCDDBExtApp
 
 	IRCMessageQueue sendQ;
 
+	IRCDDBEntryValidator validator;
+
 	
 	public IRCMemoryDB()
 	{
@@ -75,10 +77,14 @@ public class IRCMemoryDB implements IRCDDBExtApp
                 parseDateFormat.setTimeZone( TimeZone.getTimeZone("GMT"));
 
 		sendQ = null;
+		validator = null;
 	}
 		
-	public void setParams( Properties p, Pattern keyPattern, Pattern valuePattern )
+	public void setParams( Properties p, Pattern keyPattern, Pattern valuePattern,
+	    IRCDDBEntryValidator v )
 	{
+		validator = v;
+
 		bootFile = p.getProperty("memdb_bootfile", "db.txt");
 		
 		try
@@ -180,7 +186,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 						// DbObject o = new DbObject( dbDate, key, value );
 						// db.put(key, o);
 
-						dbUpdate( dbDate, key, value );
+						dbUpdate( dbDate, key, value, null );
 					}
 				}
 			}
@@ -288,8 +294,17 @@ public class IRCMemoryDB implements IRCDDBExtApp
 		return result;
 	}
 
-	public IRCDDBExtApp.UpdateResult dbUpdate( Date d, String k, String v )
+	public IRCDDBExtApp.UpdateResult dbUpdate( Date d, String k, String v, String ircUser )
 	{
+		if (validator != null)
+		{
+		  if (!validator.isValid(k, v, ircUser))
+		  {
+		    Dbg.println(Dbg.DBG1, "invalid " + k + " " + v);
+		    return null;
+		  }
+		}
+
 		IRCDDBExtApp.UpdateResult result;
 		IRCDDBExtApp.DatabaseObject newObj;
 
