@@ -145,22 +145,23 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		if (extApp != null)
 		{
 			extApp.userJoin(nick, name, host);
+
+		     if (debugChannel != null)
+		     {
+		       IRCMessage m2 = new IRCMessage();
+		       m2.command = "PRIVMSG";
+		       m2.numParams = 2;
+		       m2.params[0] = debugChannel;
+		       m2.params[1] = nick + ": LOGIN: " + host + " " + name;
+
+		       IRCMessageQueue q = getSendQ();
+		       if (q != null)
+		       {
+			  q.putMessage(m2);
+		       }
+		     }
 		}
 
-	     if (debugChannel != null)
-	     {
-	       IRCMessage m2 = new IRCMessage();
-	       m2.command = "PRIVMSG";
-	       m2.numParams = 2;
-	       m2.params[0] = debugChannel;
-	       m2.params[1] = nick + ": LOGIN: " + host + " " + name;
-
-	       IRCMessageQueue q = getSendQ();
-	       if (q != null)
-	       {
-		  q.putMessage(m2);
-	       }
-	     }
 	}
 	
 	public void userLeave (String nick)
@@ -172,6 +173,21 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			if (user.containsKey(nick))
 			{
 				extApp.userLeave(nick);
+
+			     if (debugChannel != null)
+			     {
+			       IRCMessage m2 = new IRCMessage();
+			       m2.command = "PRIVMSG";
+			       m2.numParams = 2;
+			       m2.params[0] = debugChannel;
+			       m2.params[1] = nick + ": LOGOUT";
+
+			       IRCMessageQueue q = getSendQ();
+			       if (q != null)
+			       {
+				  q.putMessage(m2);
+			       }
+			     }
 			}
 		}
 		
@@ -195,20 +211,6 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			}
 		}
 		
-	     if (debugChannel != null)
-	     {
-	       IRCMessage m2 = new IRCMessage();
-	       m2.command = "PRIVMSG";
-	       m2.numParams = 2;
-	       m2.params[0] = debugChannel;
-	       m2.params[1] = nick + ": LOGOUT";
-
-	       IRCMessageQueue q = getSendQ();
-	       if (q != null)
-	       {
-		  q.putMessage(m2);
-	       }
-	     }
 	}
 
 	public void userListReset()
