@@ -65,6 +65,8 @@ public class IRCMemoryDB implements IRCDDBExtApp
 
 	IRCDDBEntryValidator validator;
 
+	IRCMemoryDBQueryPlugin queryPlugin;
+
 	
 	public IRCMemoryDB()
 	{
@@ -78,6 +80,7 @@ public class IRCMemoryDB implements IRCDDBExtApp
 
 		sendQ = null;
 		validator = null;
+		queryPlugin = null;
 	}
 		
 	public void setParams( Properties p, Pattern keyPattern, Pattern valuePattern,
@@ -101,6 +104,26 @@ public class IRCMemoryDB implements IRCDDBExtApp
 		{
 			System.out.println("file " + bootFile + " not found.");
 		}
+
+                String queryPluginName = p.getProperty("memdb_query_plugin", "none");
+
+                if (!queryPluginName.equals("none"))
+                {
+                  try
+                  {
+                    Class queryPluginClass = Class.forName(queryPluginName);
+
+                    queryPlugin = (IRCMemoryDBQueryPlugin) queryPluginClass.newInstance();
+
+                    queryPlugin.setParams( p, this );
+
+                  }
+                  catch (Exception e)
+                  {
+                    Dbg.println(Dbg.ERR, "query plugin not loaded! " + e);
+		    queryPlugin = null;
+                  }
+                }
 	
 	}
 
@@ -124,14 +147,26 @@ public class IRCMemoryDB implements IRCDDBExtApp
 	
 	public void userJoin (String nick, String name, String host)
 	{
+	  if (queryPlugin != null)
+	  {
+	    queryPlugin.userJoin(nick, name, host);
+	  }
 	}
 	
 	public void userLeave (String nick)
 	{
+	  if (queryPlugin != null)
+	  {
+	    queryPlugin.userLeave(nick);
+	  }
 	}
 
 	public void userListReset()
 	{
+	  if (queryPlugin != null)
+	  {
+	    queryPlugin.userListReset();
+	  }
 	}
 
 	public void userChanOp (String nick, boolean op)
@@ -200,6 +235,10 @@ public class IRCMemoryDB implements IRCDDBExtApp
 	
 	public void msgQuery (IRCMessage m)
 	{
+	  if (queryPlugin != null)
+	  {
+	    queryPlugin.processQuery(m);
+	  }
 	}
 	
 	
