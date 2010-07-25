@@ -859,6 +859,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	public static void main (String args[])
 	{
 
+	    java.security.Security.setProperty("networkaddress.cache.ttl" , "10");
+	    // we need DNS round robin, cache addresses only for 10 seconds
+
 		String version = "";
 		Package pkg;
 
