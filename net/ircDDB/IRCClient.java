@@ -81,12 +81,12 @@ public class IRCClient implements Runnable
 		}
 		catch (UnknownHostException e)
 		{
-			System.out.println("IRCClient/socket: " + e);
+			Dbg.println(Dbg.ERR, "IRCClient/socket: " + e);
 			return false;
 		}
 		catch (IOException e)
 		{
-			System.out.println("IRCClient/socket: " + e);
+			Dbg.println(Dbg.ERR, "IRCClient/socket: " + e);
 			return false;
 		}
 
@@ -96,7 +96,7 @@ public class IRCClient implements Runnable
 		}
 		catch (IOException e)
 		{
-			System.out.println("IRCClient/getOutputStream: " + e);
+			Dbg.println(Dbg.ERR, "IRCClient/getOutputStream: " + e);
 			return false;
 		}
 
@@ -108,7 +108,7 @@ public class IRCClient implements Runnable
 		}
 		catch (IOException e)
 		{
-			System.out.println("IRCClient/getInputStream: " + e);
+			Dbg.println(Dbg.ERR, "IRCClient/getInputStream: " + e);
 			return false;
 		}
 
@@ -122,7 +122,7 @@ public class IRCClient implements Runnable
 		}
 		catch (IllegalThreadStateException e)
 		{
-			System.out.println("IRCClient/Thread.start: " + e);
+			Dbg.println(Dbg.ERR, "IRCClient/Thread.start: " + e);
 			return false;
 		}
 
@@ -149,7 +149,7 @@ public class IRCClient implements Runnable
 			}
 			catch (IOException e)
 			{
-				System.out.println("IRCClient/socket.shutdownInput: " + e);
+				Dbg.println(Dbg.WARN, "IRCClient/socket.shutdownInput: " + e);
 			}
 
 			try
@@ -158,7 +158,7 @@ public class IRCClient implements Runnable
 			}
 			catch (IOException e)
 			{
-				System.out.println("IRCClient/socket.close: " + e);
+				Dbg.println(Dbg.WARN, "IRCClient/socket.close: " + e);
 			}
 	
 		}
@@ -186,10 +186,10 @@ public class IRCClient implements Runnable
 				switch(state)
 				{
 				case 0:
-					System.out.println("IRCClient: connect request");
+					Dbg.println(Dbg.INFO, "IRCClient: connect request");
 					if (init())
 					{
-						System.out.println("IRCClient: connected");
+						Dbg.println(Dbg.INFO, "IRCClient: connected");
 						state = 1;
 						timer = 1;
 					}
@@ -222,7 +222,7 @@ public class IRCClient implements Runnable
 						}
 						catch(IOException e)
 						{
-							System.out.println("IRCClient/write: " +e);
+							Dbg.println(Dbg.ERR, "IRCClient/write: " +e);
 							timer = 0;
 							state = 2;
 						}
@@ -247,7 +247,7 @@ public class IRCClient implements Runnable
 			}
 			catch ( InterruptedException e )
 			{
-				System.out.println(e);
+				Dbg.println(Dbg.WARN, "sleep interrupted " + e);
 			}
 		}
 
