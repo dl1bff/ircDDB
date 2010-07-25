@@ -23,7 +23,6 @@ package net.ircDDB;
 
 
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,68 +68,155 @@ public class IRCClient implements Runnable
 		proto = new IRCProtocol(a, ch, dbg_chan, n, u, pass, debug, version);
 	}
 
-	boolean init()
-	{
 
-		recvQ = new IRCMessageQueue();
-		sendQ = new IRCMessageQueue();
 
-		try
-		{
-			socket = new Socket(host, port);
-		}
-		catch (UnknownHostException e)
-		{
-			Dbg.println(Dbg.ERR, "IRCClient/socket: " + e);
-			return false;
-		}
-		catch (IOException e)
-		{
-			Dbg.println(Dbg.ERR, "IRCClient/socket: " + e);
-			return false;
-		}
+  boolean init()
+  {
 
-		try
-		{
-			outputStream = socket.getOutputStream();
-		}
-		catch (IOException e)
-		{
-			Dbg.println(Dbg.ERR, "IRCClient/getOutputStream: " + e);
-			return false;
-		}
+    java.net.InetAddress adr[] = null;
 
-		InputStream is;
+    try
+    {
+      adr = java.net.InetAddress.getAllByName(host);
+    }
+    catch (java.net.UnknownHostException e)
+    {
+      Dbg.println(Dbg.ERR, "IRCClient/unknown host " + e);
+      return false;
+    }
 
-		try
-		{
-			is = socket.getInputStream();
-		}
-		catch (IOException e)
-		{
-			Dbg.println(Dbg.ERR, "IRCClient/getInputStream: " + e);
-			return false;
-		}
+    if (adr != null)
+    {
+      int num = adr.length;
 
-		recv = new IRCReceiver( is, recvQ );
+      if ((num > 0) && (num < 15))
+      {
 
-		recvThread = new Thread(recv);
+        int i;
 
-		try
-		{
-			recvThread.start();
-		}
-		catch (IllegalThreadStateException e)
-		{
-			Dbg.println(Dbg.ERR, "IRCClient/Thread.start: " + e);
-			return false;
-		}
+        Dbg.println(Dbg.INFO, "IRCClient/found " + num + " addresses:");
+
+        int shuffle[] = new int[num];
+
+        for (i=0; i < num; i++)
+        {
+          Dbg.println(Dbg.INFO, "  " + adr[i].getHostAddress());
+          shuffle[i] = i;
+        }
+
+        java.util.Random r = new java.util.Random();
+
+        for (i=0; i < (num - 1); i++)
+        {
+          if (r.nextBoolean())
+          {
+            int tmp;
+            tmp = shuffle[i];
+            shuffle[i] = shuffle[i+1];
+            shuffle[i+1] = tmp;
+          }
+        }
+
+        for (i=(num - 1); i > 0; i--)
+        {
+          if (r.nextBoolean())
+          {
+            int tmp;
+            tmp = shuffle[i];
+            shuffle[i] = shuffle[i-1];
+            shuffle[i-1] = tmp;
+          }
+        }
+
+	socket = null;
+
+        for (i=0; i < num; i++)
+        {
+          java.net.InetAddress a = adr[shuffle[i]];
+
+          if (a instanceof java.net.Inet4Address)
+          {
+            Dbg.println(Dbg.INFO, "IRCClient/trying: " + a.getHostAddress());
+
+            try
+            {
+              socket = new java.net.Socket();
+              java.net.InetSocketAddress endp = new java.net.InetSocketAddress(a, port);
+
+              socket.connect(endp, 5000);  // 5 seconds timeout
+            }
+            catch (java.io.IOException e)
+            {
+              Dbg.println(Dbg.WARN, "IRCClient/ioexception: " + e);
+              socket = null;
+            }
+
+            if (socket != null)
+            {
+              break;
+            }
+          }
+        }
+
+      }
+      else
+      {
+        Dbg.println(Dbg.ERR, "IRCClient/invalid number of addresses: " + adr.length);
+	return false;
+      }
+    }
+
+    if (socket == null)
+    {
+      Dbg.println(Dbg.ERR, "IRCClient: no connection");
+      return false;
+    }
+
+
+    recvQ = new IRCMessageQueue();
+    sendQ = new IRCMessageQueue();
+
+    try
+    {
+      outputStream = socket.getOutputStream();
+    }
+    catch (IOException e)
+    {
+      Dbg.println(Dbg.ERR, "IRCClient/getOutputStream: " + e);
+      return false;
+    }
+
+    InputStream is;
+
+    try
+    {
+      is = socket.getInputStream();
+    }
+    catch (IOException e)
+    {
+      Dbg.println(Dbg.ERR, "IRCClient/getInputStream: " + e);
+      return false;
+    }
+
+    recv = new IRCReceiver( is, recvQ );
+
+    recvThread = new Thread(recv);
+
+    try
+    {
+      recvThread.start();
+    }
+    catch (IllegalThreadStateException e)
+    {
+      Dbg.println(Dbg.ERR, "IRCClient/Thread.start: " + e);
+      return false;
+    }
 
 	
-		proto.setNetworkReady(true);
+    proto.setNetworkReady(true);
 
-		return true;
-	}
+    return true;
+  }
 
 
 	void closeConnection()
