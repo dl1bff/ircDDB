@@ -527,21 +527,23 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 						int count = 0;
 				
-						for (IRCDDBExtApp.DatabaseObject o : l)
+						if (l != null)
 						{
-							IRCMessage m3 = new IRCMessage(
-								m.getPrefixNick(),
-								"UPDATE " + parseDateFormat.format(o.modTime) + " "
-                                                                        + o.key + " " + o.value	);
-
-								
-							IRCMessageQueue q = getSendQ();
-							if (q != null)
-							{
-								q.putMessage(m3);
-							}
-								
-							count ++;
+						  for (IRCDDBExtApp.DatabaseObject o : l)
+						  {
+						    IRCMessage m3 = new IRCMessage(
+							  m.getPrefixNick(),
+							  "UPDATE " + parseDateFormat.format(o.modTime) + " "
+							     + o.key + " " + o.value	);
+					  
+						    IRCMessageQueue q = getSendQ();
+						    if (q != null)
+						    {
+						      q.putMessage(m3);
+						    }
+								  
+						    count ++;
+						  }
 						}
 
 						if (count > NUM_ENTRIES)
