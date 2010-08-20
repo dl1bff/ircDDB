@@ -90,7 +90,7 @@ class IRCProtocol
 		{
 			if (state != 0)
 			{
-				System.out.println("IRCProtocol/netReady: unexpected");
+				Dbg.println(Dbg.WARN, "IRCProtocol/netReady: unexpected");
 			}
 			
 			state = 1;

@@ -45,17 +45,17 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 		public DatabaseObject oldObj;
 	}
 
-	public void setParams( Properties p,
-		Pattern keyPattern, Pattern valuePattern, IRCDDBEntryValidator v );
+	public void setParams( Properties p,  int numberOfTables,
+		Pattern[] keyPattern, Pattern[] valuePattern );
 
-	public UpdateResult dbUpdate( Date d, String key, String value, String ircUser );
+	public UpdateResult dbUpdate( int tableID, Date d, String key, String value, String ircUser );
 
 	public LinkedList<DatabaseObject> getDatabaseObjects( 
-		Date beginDate, int numberOfObjects );
+		int tableID, Date beginDate, int numberOfObjects );
 
-	public Date getLastEntryDate();
+	public Date getLastEntryDate(int tableID);
 
-	public boolean needsDatabaseUpdate();
+	public boolean needsDatabaseUpdate(int tableID);
 
 	public void setCurrentServerNick(String nick);
 }

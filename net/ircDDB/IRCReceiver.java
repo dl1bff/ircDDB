@@ -64,13 +64,13 @@ public class IRCReceiver implements Runnable
 		}
 		catch (EOFException e)
 		{
-			System.out.println("IRCClient/readByte EOF");
+			Dbg.println(Dbg.INFO, "IRCClient/readByte EOF");
 			q.signalEOF();
 			return;
 		}
 		catch (IOException e)
 		{
-			System.out.println("IRCClient/readByte " + e);
+			Dbg.println(Dbg.WARN, "IRCClient/readByte " + e);
 			q.signalEOF();
 			return;
 		}

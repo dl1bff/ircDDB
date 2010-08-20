@@ -68,8 +68,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	
 	Pattern datePattern;
 	Pattern timePattern;
-	Pattern keyPattern;
-	Pattern valuePattern;
+	Pattern[] keyPattern;
+	Pattern[] valuePattern;
+	Pattern tablePattern;
+
 	SimpleDateFormat parseDateFormat;
 
 	String updateChannel;
@@ -78,12 +80,14 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	String channelTopic;
 
 	boolean acceptPublicUpdates;
-	IRCMessageQueue publicUpdates;
+	IRCMessageQueue publicUpdates[];
 
 	String dumpUserDBFileName;
 
+	int numberOfTables;
+
 	
-	IRCDDBApp(Pattern k, Pattern v, String u_chan, String dbg_chan,
+	IRCDDBApp(int numTables, Pattern[] k, Pattern[] v, String u_chan, String dbg_chan,
 		IRCDDBExtApp ea, String dumpFileName)
 	{
 		extApp = ea;
@@ -92,7 +96,14 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		currentServer = null;
 		acceptPublicUpdates = false;
 
-		publicUpdates = new IRCMessageQueue();
+		numberOfTables = numTables;
+		
+		publicUpdates = new IRCMessageQueue[numberOfTables];
+
+		for (int i = 0; i < numberOfTables; i++)
+		{
+		  publicUpdates[i] = new IRCMessageQueue();
+		}
 	
 
 		userListReset();
@@ -106,6 +117,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		
 		datePattern = Pattern.compile("20[0-9][0-9]-((1[0-2])|(0[1-9]))-((3[01])|([12][0-9])|(0[1-9]))");
 		timePattern = Pattern.compile("((2[0-3])|([01][0-9])):[0-5][0-9]:[0-5][0-9]");
+		tablePattern = Pattern.compile("[0-9]");
+
 		keyPattern = k;
 		valuePattern = v;
 
@@ -115,6 +128,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		channelTopic = "";
 
 		dumpUserDBFileName = dumpFileName;
+
 
 	}
 	
@@ -291,7 +305,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	}
 	
 
-	IRCDDBExtApp.UpdateResult processUpdate ( Scanner s, String ircUser )
+	IRCDDBExtApp.UpdateResult processUpdate ( int tableID, Scanner s, String ircUser )
 	{
 		if (s.hasNext(datePattern))
 		{
@@ -313,18 +327,18 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					dbDate = null;
 				}
 					
-				if ((dbDate != null) && s.hasNext(keyPattern))
+				if ((dbDate != null) && s.hasNext(keyPattern[tableID]))
 				{
-					String key = s.next(keyPattern);
+					String key = s.next(keyPattern[tableID]);
 					
 					
-					if (s.hasNext(valuePattern))
+					if (s.hasNext(valuePattern[tableID]))
 					{
-						String value = s.next(valuePattern);
+						String value = s.next(valuePattern[tableID]);
 
 						if (extApp != null)
 						{
-							return extApp.dbUpdate( dbDate, key, value, ircUser );
+							return extApp.dbUpdate( tableID, dbDate, key, value, ircUser );
 						}
 					}
 				}
@@ -336,39 +350,55 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	 
 	void enablePublicUpdates()
 	{
-		acceptPublicUpdates = true;
+	  acceptPublicUpdates = true;
 
-		while (publicUpdates.messageAvailable())
+	  for (int i = (numberOfTables-1); i >= 0; i--)
+	  {
+		while (publicUpdates[i].messageAvailable())
 		{
-			IRCMessage m = publicUpdates.getMessage();
+			IRCMessage m = publicUpdates[i].getMessage();
 
 			String msg = m.params[1];
 
                         Scanner s = new Scanner(msg);
 
-			processUpdate(s, null);
+			processUpdate(i, s, null);
 		}
+	  }
 	}
 	
 	public void msgChannel (IRCMessage m)
 	{
 		// System.out.println("APP: chan");
+
 		
 		if (m.getPrefixNick().startsWith("s-"))  // server msg
 		{
+			int tableID = 0;
+
 			String msg = m.params[1];
 			
 			Scanner s = new Scanner(msg);
+
+			if (s.hasNext(tablePattern))
+			{
+			  tableID = s.nextInt();
+			  if ((tableID < 0) || (tableID >= numberOfTables))
+			  {
+			    Dbg.println(Dbg.INFO, "invalid table ID " + tableID);
+			    return;
+			  }
+			}
 			
 			if (s.hasNext(datePattern))
 			{
 				if (acceptPublicUpdates)
 				{
-					processUpdate(s, null); 
+					processUpdate(tableID, s, null); 
 				}
 				else
 				{
-					publicUpdates.putMessage(m);
+					publicUpdates[tableID].putMessage(m);
 				}
 			}
 			else
@@ -379,6 +409,29 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				}
 			}
 		}
+	}
+
+	private String getTableIDString( int tableID, boolean spaceBeforeNumber )
+	{
+	  if (tableID == 0)
+	  {
+	    return "";
+	  }
+	  else if ((tableID > 0) && (tableID < numberOfTables))
+	  {
+	    if (spaceBeforeNumber)
+	    {
+	      return " " + tableID;
+	    }
+	    else
+	    {	
+	      return tableID + " ";
+	    }
+	  }
+	  else
+	  {
+	    return " TABLE_ID_OUT_OF_RANGE ";
+	  }
 	}
 	
 	public void msgQuery (IRCMessage m)
@@ -398,6 +451,18 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		{
 			return; // no command
 		}
+
+		int tableID = 0;
+
+		if (s.hasNext(tablePattern))
+		{
+		  tableID = s.nextInt();
+		  if ((tableID < 0) || (tableID >= numberOfTables))
+		  {
+		    Dbg.println(Dbg.WARN, "invalid table ID " + tableID);
+		    return;
+		  }
+		}
 		
 		if (command.equals("UPDATE"))
 		{	
@@ -406,7 +471,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			if (s.hasNext(datePattern)  &&
 				(other != null))
 			{
-				IRCDDBExtApp.UpdateResult result = processUpdate(s, other.nick);
+				IRCDDBExtApp.UpdateResult result = processUpdate(tableID, s, other.nick);
 				
 				if (result != null)
 				{
@@ -445,7 +510,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						m2.command = "PRIVMSG";
 						m2.numParams = 2;
 						m2.params[0] = updateChannel;
-						m2.params[1] = parseDateFormat.format(result.newObj.modTime) + " " + 
+						m2.params[1] = getTableIDString(tableID, false) + 
+						      parseDateFormat.format(result.newObj.modTime) + " " +
 							result.newObj.key + " " + result.newObj.value + "  (from: " + m.getPrefixNick() + ")";
 						
 						IRCMessageQueue q = getSendQ();
@@ -520,10 +586,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						
 					if ((dbDate != null) && (extApp != null))
 					{
-						final int NUM_ENTRIES = 20;
+						final int NUM_ENTRIES = 30;
 
 						LinkedList<IRCDDBExtApp.DatabaseObject> l = 
-							extApp.getDatabaseObjects( dbDate, NUM_ENTRIES );
+							extApp.getDatabaseObjects( tableID, dbDate, NUM_ENTRIES );
 
 						int count = 0;
 				
@@ -533,7 +599,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						  {
 						    IRCMessage m3 = new IRCMessage(
 							  m.getPrefixNick(),
-							  "UPDATE " + parseDateFormat.format(o.modTime) + " "
+							  "UPDATE" + getTableIDString(tableID, true) +
+							    " " + parseDateFormat.format(o.modTime) + " "
 							     + o.key + " " + o.value	);
 					  
 						    IRCMessageQueue q = getSendQ();
@@ -568,40 +635,17 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		}
 		else if (command.equals("LIST_END"))
 		{
-			UserObject me = user.get(myNick);
-			UserObject other = user.get(m.getPrefixNick()); // nick of other user
-			
-			if ((me != null) && (other != null) && !me.op && other.op
-				&& other.nick.startsWith("s-") && me.nick.startsWith("s-") )
-			{
-				IRCMessage m2 = new IRCMessage();
-				m2.command = "PRIVMSG";
-				m2.numParams = 2;
-				m2.params[0] = m.getPrefixNick();
-				m2.params[1] = "OP_BEG";
-				
-				IRCMessageQueue q = getSendQ();
-				if (q != null)
-				{
-					q.putMessage(m2);
-				}
-			}
-
-			enablePublicUpdates();
+		    if (state == 5) // if in sendlist processing state
+		    {
+		      state = 3;  // get next table
+		    }
 		}
 		else if (command.equals("LIST_MORE"))
 		{
-			if ((extApp != null) && extApp.needsDatabaseUpdate())
-			{
-				IRCMessage m2 = new IRCMessage(
-					currentServer, "SENDLIST " + getLastEntryTime());
-				
-				IRCMessageQueue q = getSendQ();
-				if (q != null)
-				{
-					q.putMessage(m2);
-				}
-			}
+		    if (state == 5) // if in sendlist processing state
+		    {
+		      state = 4;  // send next SENDLIST
+		    }
 		}
 		else if (command.equals("OP_BEG"))
 		{
@@ -676,13 +720,13 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	}
 	
 	
-	String getLastEntryTime()
+	String getLastEntryTime(int tableID)
 	{
 
 		if (extApp != null)
 		{
 
-			Date d = extApp.getLastEntryDate();
+			Date d = extApp.getLastEntryDate(tableID);
 
 			if (d != null)
 			{
@@ -698,6 +742,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	{
 
 		int dumpUserDBTimer = 60;
+		int sendlistTableID = 0;
 		
 		while (true)
 		{
@@ -727,6 +772,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			  break;
 			
 			case 2:   // choose server
+			  Dbg.println(Dbg.DBG1, "IRCDDBApp: state=2 choose new 's-'-user");
 				if (getSendQ() == null)
 				{
 					state = 10;
@@ -735,25 +781,15 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				{	
 					if (findServerUser())
 					{
-						state = 3;
+						sendlistTableID = numberOfTables;
 
-						if ((extApp != null) && extApp.needsDatabaseUpdate())
+						if (extApp != null)
 						{
-							IRCMessage m = new IRCMessage();
-							m.command = "PRIVMSG";
-							m.numParams = 2;
-							m.params[0] = currentServer;
-							m.params[1] = "SENDLIST " + getLastEntryTime();
-							
-							IRCMessageQueue q = getSendQ();
-							if (q != null)
-							{
-								q.putMessage(m);
-							}
+						  state = 3; // next: send "SENDLIST"
 						}	
 						else
 						{
-							enablePublicUpdates();
+						  state = 6; // next: enablePublicUpdates
 						}
 					}
 					else if (timer == 0)
@@ -777,11 +813,117 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			case 3:
 				if (getSendQ() == null)
 				{
+				  state = 10; // disconnect DB
+				}
+				else
+				{
+				  sendlistTableID --;
+				  if (sendlistTableID < 0)
+				  {
+				    state = 6; // end of sendlist
+				  }
+				  else
+				  {
+				    Dbg.println(Dbg.DBG1, "IRCDDBApp: state=3 tableID="+sendlistTableID);
+				    state = 4; // send "SENDLIST"
+				    timer = 900; // 15 minutes max for update
+				  }
+				}
+				break;
+
+			case 4:
+				if (getSendQ() == null)
+				{
+				  state = 10; // disconnect DB
+				}
+				else
+				{
+				    if (extApp.needsDatabaseUpdate(sendlistTableID))
+				    {
+				      IRCMessage m = new IRCMessage();
+				      m.command = "PRIVMSG";
+				      m.numParams = 2;
+				      m.params[0] = currentServer;
+				      m.params[1] = "SENDLIST" + getTableIDString(sendlistTableID, true) 
+				       + " " + getLastEntryTime(sendlistTableID);
+				      
+				      IRCMessageQueue q = getSendQ();
+				      if (q != null)
+				      {
+					      q.putMessage(m);
+				      }
+
+				      state = 5; // wait for answers
+				    }
+				    else
+				    {
+				      state = 3; // don't send SENDLIST for this table, go to next table
+				    }
+				}
+				break;
+
+			case 5: // sendlist processing
+				if (getSendQ() == null)
+				{
 					state = 10; // disconnect DB
+				}
+				else if (timer == 0)
+				{
+					state = 10;
+					
+					IRCMessage m = new IRCMessage();
+					m.command = "QUIT";
+					m.numParams = 1;
+					m.params[0] = "timeout SENDLIST";
+					
+					IRCMessageQueue q = getSendQ();
+					if (q != null)
+					{
+					q.putMessage(m);
+					}
+				}
+				break;
+
+			case 6:
+				if (getSendQ() == null)
+				{
+					state = 10; // disconnect DB
+				}
+				else
+				{
+				  UserObject me = user.get(myNick);
+				  UserObject other = user.get(currentServer);
+
+				  if ((me != null) && (currentServer != null) && !me.op && other.op
+					  && other.nick.startsWith("s-") && me.nick.startsWith("s-") )
+				  {
+					  IRCMessage m2 = new IRCMessage();
+					  m2.command = "PRIVMSG";
+					  m2.numParams = 2;
+					  m2.params[0] = other.nick;
+					  m2.params[1] = "OP_BEG";
+					  
+					  IRCMessageQueue q = getSendQ();
+					  if (q != null)
+					  {
+						  q.putMessage(m2);
+					  }
+				  }
+
+				  Dbg.println(Dbg.DBG1, "IRCDDBApp: state=6 enablePublcUpdates");
+				  enablePublicUpdates();
+				  state = 7;
 				}
 				break;
 				
 			
+			case 7: // standby state after initialization
+				if (getSendQ() == null)
+				{
+					state = 10; // disconnect DB
+				}
+				break;
+				
 			case 10:
 				// disconnect db
 				state = 0;
@@ -926,16 +1068,31 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			irc_name = rptr_call;
 		}
 		
-		String keyPatternString = properties.getProperty("ddb_key_pattern", "[A-Z0-9_]{8}");
-		String valuePatternString = properties.getProperty("ddb_value_pattern", "[A-Z0-9_]{8}");
 
-		Pattern keyPattern = null;
-		Pattern valuePattern = null;
+		int numTables =	Integer.parseInt(properties.getProperty("ddb_num_tables", "2"));
+
+		if ((numTables < 1) || (numTables > 10))
+		{
+		  Dbg.println(Dbg.ERR, "invalid ddb_num_tables: " + numTables + " must be:  1 <= x <= 10" );
+		  System.exit(1);
+		}
+
+		Pattern[] keyPattern = new Pattern[numTables];
+		Pattern[] valuePattern = new Pattern[numTables];
 		
 		try
 		{
-			keyPattern = Pattern.compile(keyPatternString);
-			valuePattern = Pattern.compile(valuePatternString);
+		  int i;
+
+		  for (i=0; i < numTables; i++)
+		  {
+		    Pattern k = Pattern.compile(properties.getProperty("ddb_key_pattern" + i, "[A-Z0-9_]{8}"));
+		    Pattern v = Pattern.compile(properties.getProperty("ddb_value_pattern" + i, "[A-Z0-9_]{8}"));
+
+		    keyPattern[i] = k;
+		    valuePattern[i] = v;
+		  }
+
 		}
 		catch (PatternSyntaxException e)
 		{
@@ -943,27 +1100,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			System.exit(1);
 		} 
 
-		String entryValidatorName = properties.getProperty("db_entry_validator", "none");
-		IRCDDBEntryValidator validator = null;
 
-		if (!entryValidatorName.equals("none"))
-		{
-		  try
-		  {
-		    Class entryValidatorClass =
-		      Class.forName(entryValidatorName);
 
-		    validator = (IRCDDBEntryValidator) entryValidatorClass.newInstance();
-
-		    validator.setParams( properties );
-
-		  }
-		  catch (Exception e)
-		  {
-		    Dbg.println(Dbg.ERR, "entry validator: " + e);
-		    System.exit(1);
-		  }
-		}
 
 		String extAppName = properties.getProperty("ext_app", "none");
 		IRCDDBExtApp extApp = null;
@@ -977,7 +1115,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 				extApp = (IRCDDBExtApp) extAppClass.newInstance();
 
-				extApp.setParams( properties, keyPattern, valuePattern, validator );
+				extApp.setParams( properties, numTables, keyPattern, valuePattern );
 
 				Thread extappthr = new Thread(extApp);
 
@@ -1043,8 +1181,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 		Dbg.println(Dbg.INFO, "Version " + version);
 		
-		IRCDDBApp app = new IRCDDBApp (keyPattern, valuePattern,
-			irc_channel, debug_channel, extApp,
+		IRCDDBApp app = new IRCDDBApp (numTables, keyPattern, valuePattern,
+			irc_channel, debug_channel,
+			extApp,
 			properties.getProperty("dump_userdb_filename", "none") );
 		
 		Thread appthr = new Thread(app);
