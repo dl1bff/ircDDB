@@ -1,5 +1,6 @@
 
 
+
 class-files:
 	javac net/ircDDB/*.java
 
