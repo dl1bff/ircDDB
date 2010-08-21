@@ -1115,7 +1115,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 				extApp = (IRCDDBExtApp) extAppClass.newInstance();
 
-				extApp.setParams( properties, numTables, keyPattern, valuePattern );
+				if (extApp.setParams( properties, numTables, keyPattern, valuePattern ) == false)
+				{
+				  Dbg.println(Dbg.ERR, "ext_app setParams failed - exit.");
+				  System.exit(1);
+				}
 
 				Thread extappthr = new Thread(extApp);
 

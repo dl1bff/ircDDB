@@ -45,7 +45,7 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 		public DatabaseObject oldObj;
 	}
 
-	public void setParams( Properties p,  int numberOfTables,
+	public boolean setParams( Properties p,  int numberOfTables,
 		Pattern[] keyPattern, Pattern[] valuePattern );
 
 	public UpdateResult dbUpdate( int tableID, Date d, String key, String value, String ircUser );
