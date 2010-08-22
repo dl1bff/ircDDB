@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Enumeration;
 
 import java.util.Properties;
 
@@ -86,6 +87,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	int numberOfTables;
 
+	Properties properties;
+
 	
 	IRCDDBApp(int numTables, Pattern[] k, Pattern[] v, String u_chan, String dbg_chan,
 		IRCDDBExtApp ea, String dumpFileName)
@@ -130,6 +133,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		dumpUserDBFileName = dumpFileName;
 
 
+	}
+
+	void setParams( Properties p )
+	{
+	  properties = p;
 	}
 	
 	
@@ -692,6 +700,44 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				state = 11;  // exit
 			}
 		}
+		else if (command.equals("SHOW_PROPERTIES"))
+		{
+		  UserObject other = user.get(m.getPrefixNick()); // nick of other user
+
+		  if ((other != null) && other.op
+			  && other.nick.startsWith("u-"))
+		  {
+		    int num = properties.size();
+
+		    for (Enumeration e = properties.keys(); e.hasMoreElements(); )
+		    {
+		      String k = (String) e.nextElement();
+		      String v = properties.getProperty(k);
+
+		      if (k.equals("irc_password"))
+		      {
+			v = "*****";
+		      }
+		      else
+		      {
+			v = "(" + v + ")";
+		      }
+
+			IRCMessage m2 = new IRCMessage();
+			m2.command = "PRIVMSG";
+			m2.numParams = 2;
+			m2.params[0] = m.getPrefixNick();
+			m2.params[1] = num + ": (" + k + ") " + v;
+			
+			IRCMessageQueue q = getSendQ();
+			if (q != null)
+			{
+				q.putMessage(m2);
+			}
+		      num --;
+		    }
+		  }
+		}
 		else
 		{
 			if (extApp != null)
@@ -1190,6 +1236,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			extApp,
 			properties.getProperty("dump_userdb_filename", "none") );
 		
+		app.setParams(properties);
+
 		Thread appthr = new Thread(app);
 		
 		appthr.start();
