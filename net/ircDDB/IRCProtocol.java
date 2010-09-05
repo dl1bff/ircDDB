@@ -213,20 +213,29 @@ class IRCProtocol
 			}
 			else if (m.command.equals("MODE"))
 			{
-				if ((m.numParams >= 3) && m.params[0].equals(channel))
+			  if ((m.numParams >= 3) && m.params[0].equals(channel))
+			  {
+			    if (app != null)
+			    {
+			      int i;
+			      String mode = m.params[1];
+
+			      for (i = 1; (i < mode.length()) && (m.numParams >= (i+2)); i++)
+			      {
+				if ( mode.charAt(i) == 'o' )
 				{
-					if (app != null)
-					{
-						if ( m.params[1].equals("+o") )
-						{
-							app.userChanOp(m.params[2], true);
-						}
-						else if ( m.params[1].equals("-o") )
-						{
-							app.userChanOp(m.params[2], false);
-						}
-					}
+				  if ( mode.charAt(0) == '+' )
+				  {
+				    app.userChanOp(m.params[i+1], true);
+				  }
+				  else if ( mode.charAt(0) == '-' )
+				  {
+				    app.userChanOp(m.params[i+1], false);
+				  }
 				}
+			      } // for
+			    } // app != null
+			  }
 			}
 			else if (m.command.equals("PRIVMSG"))
 			{
