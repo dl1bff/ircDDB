@@ -1086,8 +1086,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		Dbg.setDebugLevel(Integer.parseInt(properties.getProperty("debug_level", "35")));
 		Dbg.println(Dbg.INFO, "Start");
 		
-		String irc_nick = properties.getProperty("irc_nick", "guest").trim().toLower();
-		String rptr_call = properties.getProperty("rptr_call", "nocall").trim().toLower();
+		String irc_nick = properties.getProperty("irc_nick", "guest").trim().toLowerCase();
+		String rptr_call = properties.getProperty("rptr_call", "nocall").trim().toLowerCase();
 
 		boolean debug = properties.getProperty("debug", "0").equals("1");
 		
