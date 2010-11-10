@@ -89,6 +89,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	Properties properties;
 
+	Date startupTime;
+	String reconnectReason;
+
+	int channelTimeout;
+
 	
 	IRCDDBApp(int numTables, Pattern[] k, Pattern[] v, String u_chan, String dbg_chan,
 		IRCDDBExtApp ea, String dumpFileName)
@@ -132,7 +137,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 		dumpUserDBFileName = dumpFileName;
 
+		startupTime = new Date();
+		reconnectReason = "startup";
 
+		channelTimeout = 0;
 	}
 
 	void setParams( Properties p )
@@ -225,10 +233,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 				if (currentServer.equals(nick))
 				{
-					// currentServer = null;
-					state = 2;  // choose new server
-					timer = 200;
-					acceptPublicUpdates = false;
+				  // currentServer = null;
+				  state = 2;  // choose new server
+				  timer = 200;
+				  acceptPublicUpdates = false;
+				  reconnectReason = nick + " left channel";
 				}
 			}
 		}
@@ -411,10 +420,14 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			}
 			else
 			{
-				if (extApp != null)
-				{
-					extApp.msgChannel( m );
-				}
+			  if (msg.startsWith("IRCDDB "))
+			  {
+			    channelTimeout = 0;
+			  }
+			  else if (extApp != null)
+			  {
+			    extApp.msgChannel( m );
+			  }
 			}
 		}
 	}
@@ -698,6 +711,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 				timer = 3;
 				state = 11;  // exit
+				reconnectReason = "QUIT_NOW received";
 			}
 		}
 		else if (command.equals("SHOW_PROPERTIES"))
@@ -737,6 +751,23 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		      num --;
 		    }
 		  }
+		}
+		else if (command.equals("IRCDDB"))
+		{
+		   if (debugChannel != null)
+		   {
+		     IRCMessage m2 = new IRCMessage();
+		     m2.command = "PRIVMSG";
+		     m2.numParams = 2;
+		     m2.params[0] = debugChannel;
+		     m2.params[1] = m.getPrefixNick() + ": " + msg;
+
+		     IRCMessageQueue q = getSendQ();
+		     if (q != null)
+		     {
+			q.putMessage(m2);
+		     }
+		   }
 		}
 		else
 		{
@@ -799,6 +830,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			}
 			
 			// System.out.println("state " + state);
+
+			channelTimeout ++;
 			
 			
 			switch(state)
@@ -821,7 +854,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			  Dbg.println(Dbg.DBG1, "IRCDDBApp: state=2 choose new 's-'-user");
 				if (getSendQ() == null)
 				{
-					state = 10;
+				  state = 10;
+				  reconnectReason = "getSendQ in state 2";
 				}
 				else
 				{	
@@ -841,6 +875,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					else if (timer == 0)
 					{
 						state = 10;
+						reconnectReason = "timeout in state 2";
 						
 						IRCMessage m = new IRCMessage();
 						m.command = "QUIT";
@@ -860,6 +895,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				if (getSendQ() == null)
 				{
 				  state = 10; // disconnect DB
+				  reconnectReason = "getSendQ in state 3";
 				}
 				else
 				{
@@ -881,6 +917,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				if (getSendQ() == null)
 				{
 				  state = 10; // disconnect DB
+				  reconnectReason = "getSendQ in state 4";
 				}
 				else
 				{
@@ -912,10 +949,12 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				if (getSendQ() == null)
 				{
 					state = 10; // disconnect DB
+					reconnectReason = "getSendQ in state 5";
 				}
 				else if (timer == 0)
 				{
 					state = 10;
+					reconnectReason = "timeout in state 5";
 					
 					IRCMessage m = new IRCMessage();
 					m.command = "QUIT";
@@ -934,31 +973,53 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				if (getSendQ() == null)
 				{
 					state = 10; // disconnect DB
+					reconnectReason = "getSendQ in state 6";
 				}
 				else
 				{
 				  UserObject me = user.get(myNick);
-				  UserObject other = user.get(currentServer);
 
-				  if ((me != null) && (currentServer != null) && !me.op && other.op
-					  && other.nick.startsWith("s-") && me.nick.startsWith("s-") )
+				  if ((me != null) && (currentServer != null))
 				  {
-					  IRCMessage m2 = new IRCMessage();
-					  m2.command = "PRIVMSG";
-					  m2.numParams = 2;
-					  m2.params[0] = other.nick;
-					  m2.params[1] = "OP_BEG";
-					  
-					  IRCMessageQueue q = getSendQ();
-					  if (q != null)
-					  {
-						  q.putMessage(m2);
-					  }
-				  }
+				    UserObject other = user.get(currentServer);
 
-				  Dbg.println(Dbg.DBG1, "IRCDDBApp: state=6 enablePublcUpdates");
-				  enablePublicUpdates();
-				  state = 7;
+				    if ((other != null) && !me.op && other.op
+					  && other.nick.startsWith("s-") && me.nick.startsWith("s-") )
+				    {
+				      IRCMessage m2 = new IRCMessage();
+				      m2.command = "PRIVMSG";
+				      m2.numParams = 2;
+				      m2.params[0] = other.nick;
+				      m2.params[1] = "OP_BEG";
+				      
+				      IRCMessageQueue q = getSendQ();
+				      if (q != null)
+				      {
+					      q.putMessage(m2);
+				      }
+				    }
+
+				    if (other != null)
+				    {
+				      IRCMessage m2 = new IRCMessage();
+				      m2.command = "PRIVMSG";
+				      m2.numParams = 2;
+				      m2.params[0] = other.nick;
+				      m2.params[1] = "IRCDDB " + parseDateFormat.format(startupTime) + " " +
+					  reconnectReason;
+				      
+				      IRCMessageQueue q = getSendQ();
+				      if (q != null)
+				      {
+					      q.putMessage(m2);
+				      }
+				    }
+
+				    Dbg.println(Dbg.DBG1, "IRCDDBApp: state=6");
+				    enablePublicUpdates();
+				    state = 7;
+				    channelTimeout = 0;
+				  }
 				}
 				break;
 				
@@ -966,7 +1027,16 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			case 7: // standby state after initialization
 				if (getSendQ() == null)
 				{
-					state = 10; // disconnect DB
+				  state = 10; // disconnect DB
+				  reconnectReason = "getSendQ in state 7";
+				}
+				else
+				{
+				  if (channelTimeout > 600) // 10 minutes with no IRCDDB msg in channel
+				  {
+				    state = 10;
+				    reconnectReason = "timeout waiting for IRCDDB msg";
+				  }
 				}
 				break;
 				
