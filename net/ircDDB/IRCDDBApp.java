@@ -863,6 +863,19 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					{
 						sendlistTableID = numberOfTables;
 
+						IRCMessage m2 = new IRCMessage();
+						m2.command = "PRIVMSG";
+						m2.numParams = 2;
+						m2.params[0] = currentServer;
+						m2.params[1] = "IRCDDB " + parseDateFormat.format(startupTime) + " " +
+						    reconnectReason;
+						
+						IRCMessageQueue q = getSendQ();
+						if (q != null)
+						{
+							q.putMessage(m2);
+						}
+
 						if (extApp != null)
 						{
 						  state = 3; // next: send "SENDLIST"
@@ -999,21 +1012,6 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				      }
 				    }
 
-				    if (other != null)
-				    {
-				      IRCMessage m2 = new IRCMessage();
-				      m2.command = "PRIVMSG";
-				      m2.numParams = 2;
-				      m2.params[0] = other.nick;
-				      m2.params[1] = "IRCDDB " + parseDateFormat.format(startupTime) + " " +
-					  reconnectReason;
-				      
-				      IRCMessageQueue q = getSendQ();
-				      if (q != null)
-				      {
-					      q.putMessage(m2);
-				      }
-				    }
 
 				    Dbg.println(Dbg.DBG1, "IRCDDBApp: state=6");
 				    enablePublicUpdates();
