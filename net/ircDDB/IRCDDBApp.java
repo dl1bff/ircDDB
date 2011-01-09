@@ -1279,6 +1279,17 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			}
 		}
 
+		String package_version = System.getenv("PACKAGE_VERSION");
+
+		if (package_version != null)
+		{
+		  if (version.length() > 0)
+		  {
+		     version = version + " ";
+		  }
+
+		  version = version + package_version;
+		}
 
 
 
