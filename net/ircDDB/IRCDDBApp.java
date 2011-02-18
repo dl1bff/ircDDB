@@ -86,6 +86,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	String dumpUserDBFileName;
 
 	int numberOfTables;
+	int numberOfTablesToSync;
 
 	Properties properties;
 
@@ -105,6 +106,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		acceptPublicUpdates = false;
 
 		numberOfTables = numTables;
+		numberOfTablesToSync = numTables;
 		
 		publicUpdates = new IRCMessageQueue[numberOfTables];
 
@@ -146,6 +148,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	void setParams( Properties p )
 	{
 	  properties = p;
+
+	  numberOfTablesToSync = Integer.parseInt(properties.getProperty("ddb_num_tables_sync", "2"));
 	}
 	
 	
@@ -861,7 +865,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				{	
 					if (findServerUser())
 					{
-						sendlistTableID = numberOfTables;
+						sendlistTableID = numberOfTablesToSync;
 
 						IRCMessage m2 = new IRCMessage();
 						m2.command = "PRIVMSG";
