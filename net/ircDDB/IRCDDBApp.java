@@ -72,6 +72,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	Pattern[] keyPattern;
 	Pattern[] valuePattern;
 	Pattern tablePattern;
+	Pattern hexcharPattern;
+	Pattern defaultValuePattern;
 
 	SimpleDateFormat parseDateFormat;
 
@@ -128,6 +130,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		datePattern = Pattern.compile("20[0-9][0-9]-((1[0-2])|(0[1-9]))-((3[01])|([12][0-9])|(0[1-9]))");
 		timePattern = Pattern.compile("((2[0-3])|([01][0-9])):[0-5][0-9]:[0-5][0-9]");
 		tablePattern = Pattern.compile("[0-9]");
+		hexcharPattern = Pattern.compile("[0-9A-F]");
+		defaultValuePattern = Pattern.compile("[A-Z0-9_]{8}");
 
 		keyPattern = k;
 		valuePattern = v;
@@ -458,6 +462,60 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	    return " TABLE_ID_OUT_OF_RANGE ";
 	  }
 	}
+
+
+	String checkPrivCommand (String msg)
+	{
+	  Scanner s = new Scanner(msg);
+
+	  String command = s.next();
+
+	  int tableID = 0;
+
+	  if (s.hasNext(tablePattern))
+	  {
+	    tableID = s.nextInt();
+	  }
+ 
+	  String d = s.next(datePattern);
+	  String t = s.next(timePattern);
+
+	  String key = s.next(keyPattern[tableID]);
+          String value = s.next(valuePattern[tableID]);
+
+	  String dummy;
+
+	  if (s.hasNext(hexcharPattern))
+	  {
+	    dummy = s.next(hexcharPattern);
+	  }
+
+	  if (s.hasNext(defaultValuePattern))  // rpt2
+	  {
+	    dummy = s.next(defaultValuePattern);
+	  }
+	  else
+	  {
+	    return null;
+	  }
+
+	  if (s.hasNext(defaultValuePattern))  // urcall
+	  {
+	    String urcall = s.next(defaultValuePattern);
+
+	    if (urcall.startsWith("PRIV"))
+	    {
+	      return urcall;
+	    }
+
+	    if (urcall.startsWith("//"))
+	    {
+	      return urcall;
+	    }
+	  }
+
+	  return null;
+	}
 	
 	public void msgQuery (IRCMessage m)
 	{
@@ -546,7 +604,55 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						}
 					}
 
-				     if ((debugChannel != null) && (result.hideFromLog == false))
+				     String privCommand = null;
+				     
+				     if (tableID == 0)
+				     {
+				       privCommand = checkPrivCommand (msg);
+				     }
+
+				     if (privCommand != null)
+				     {
+				       String setPriv = null;
+
+				       if ((privCommand.equals("PRIV_ON_") || privCommand.equals("PRIV__ON"))
+					    && (result.hideFromLog == false))
+				       {
+					 setPriv = "P_______";
+				       }
+
+				       if (privCommand.equals("PRIV_OFF")
+					    && (result.hideFromLog == true))
+				       {
+					 setPriv = "X_______";
+				       }
+
+				       if ((setPriv != null) && (me != null) && me.op)  // send only if i am operator
+				       {
+					  IRCMessage m2 = new IRCMessage();
+					  m2.command = "PRIVMSG";
+					  m2.numParams = 2;
+					  m2.params[0] = updateChannel;
+					  m2.params[1] = getTableIDString(2, false) + 
+						parseDateFormat.format(result.newObj.modTime) + " " +
+						  result.newObj.key + " " + setPriv + "  (from: " + m.getPrefixNick() + ")";
+					  
+					  IRCMessageQueue q = getSendQ();
+					  if (q != null)
+					  {
+						  q.putMessage(m2);
+					  }
+
+					  if (extApp != null)
+					  {
+					    extApp.dbUpdate( 2, result.newObj.modTime, result.newObj.key, setPriv, myNick );
+					  }
+
+				       }
+				     }
+
+				     if ((debugChannel != null) && (result.hideFromLog == false)
+					  && (privCommand == null))
 				     {
 				       IRCMessage m2 = new IRCMessage();
 				       m2.command = "PRIVMSG";
