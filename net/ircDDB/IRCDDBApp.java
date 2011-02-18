@@ -546,7 +546,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						}
 					}
 
-				     if (debugChannel != null)
+				     if ((debugChannel != null) && (result.hideFromLog == false))
 				     {
 				       IRCMessage m2 = new IRCMessage();
 				       m2.command = "PRIVMSG";
