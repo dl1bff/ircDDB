@@ -508,6 +508,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	      return urcall;
 	    }
 
+	    if (urcall.startsWith("VIS"))
+	    {
+	      return urcall;
+	    }
+
 	    if (urcall.startsWith("//"))
 	    {
 	      return urcall;
@@ -627,7 +632,20 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					 setPriv = "X_______";
 				       }
 
-				       if ((setPriv != null) && (me != null) && me.op)  // send only if i am operator
+				       if ((privCommand.equals("VIS_OFF_") || privCommand.equals("VIS__OFF"))
+					    && (result.hideFromLog == false))
+				       {
+					 setPriv = "P_______";
+				       }
+
+				       if ((privCommand.equals("VIS_ON__") || privCommand.equals("VIS__ON_") || privCommand.equals("VIS___ON"))
+					    && (result.hideFromLog == true))
+				       {
+					 setPriv = "X_______";
+				       }
+
+				       if ((setPriv != null) && (me != null) && me.op
+					    && (numberOfTables >= 3))  // send only if i am operator and ddb_num_tables >= 3
 				       {
 					  IRCMessage m2 = new IRCMessage();
 					  m2.command = "PRIVMSG";
