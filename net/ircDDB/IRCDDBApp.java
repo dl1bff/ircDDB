@@ -97,6 +97,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	int channelTimeout;
 
+
+	String rptrLocation;
+	String[] rptrFrequencies;
+	int numRptrFreq;
+
 	
 	IRCDDBApp(int numTables, Pattern[] k, Pattern[] v, String u_chan, String dbg_chan,
 		IRCDDBExtApp ea, String dumpFileName)
@@ -147,6 +152,10 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		reconnectReason = "startup";
 
 		channelTimeout = 0;
+
+		rptrLocation = null;
+		rptrFrequencies = null;
+		numRptrFreq = 0;
 	}
 
 	void setParams( Properties p )
@@ -154,6 +163,55 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	  properties = p;
 
 	  numberOfTablesToSync = Integer.parseInt(properties.getProperty("ddb_num_tables_sync", "2"));
+
+	  double latitude = Double.parseDouble(properties.getProperty("rptr_pos_latitude", "0"));
+	  double longitude = Double.parseDouble(properties.getProperty("rptr_pos_longitude", "0"));
+
+	  if ((latitude != 0.0) || (longitude != 0.0))
+	  {
+	    String desc1 = properties.getProperty("rptr_pos_text1", "").trim().replaceAll("[^a-zA-Z0-9 -+&(),./']", "");
+	    String desc2 = properties.getProperty("rptr_pos_text2", "").trim().replaceAll("[^a-zA-Z0-9 -+&(),./']", "");
+	    
+	    while (desc1.length() < 20)
+	    {
+	      desc1 = desc1 + " ";
+	    }
+
+	    while (desc2.length() < 20)
+	    {
+	      desc2 = desc2 + " ";
+	    }
+
+	    rptrLocation = String.format("%1$+09.5f %2$+010.5f %3$s %4$s", latitude, longitude,
+		desc1.substring(0,20).replace(' ', '_'), desc2.substring(0,20).replace(' ', '_'));
+
+	    String modules[] = { "A", "B", "C", "D", "AD" };
+
+	    numRptrFreq = modules.length;
+
+	    rptrFrequencies = new String[numRptrFreq];
+
+	    int i;
+	    for (i=0; i < numRptrFreq; i++)
+	    {
+	      double freq = Double.parseDouble(properties.getProperty("rptr_freq_" + modules[i] , "0"));
+	      double shift = Double.parseDouble(properties.getProperty("rptr_duplex_shift_" + modules[i] , "0"));
+	      double range = Double.parseDouble(properties.getProperty("rptr_range_" + modules[i] , "0"));
+
+	      if ((freq > 1.0) && (range > 0.0))
+	      {
+		rptrFrequencies[i] = String.format("%1$s %2$011.5f %3$+010.5f %4$010.5f", modules[i],  freq, shift, range);
+	      }
+	      else
+	      {
+		rptrFrequencies[i] = null;
+	      }
+	    }
+
+	  }
+
+	  
+
 	}
 	
 	
@@ -1003,6 +1061,43 @@ public class IRCDDBApp implements IRCApplication, Runnable
 						{
 							q.putMessage(m2);
 						}
+
+						if (rptrLocation != null)
+						{
+						  m2 = new IRCMessage();
+						  m2.command = "PRIVMSG";
+						  m2.numParams = 2;
+						  m2.params[0] = currentServer;
+						  m2.params[1] = "IRCDDB QTH: " + rptrLocation;
+						  q = getSendQ();
+						  if (q != null)
+						  {
+							  q.putMessage(m2);
+						  }
+						}
+
+						if ((rptrFrequencies != null) && (numRptrFreq > 0))
+						{
+						  int i;
+
+						  for (i=0; i < numRptrFreq; i++)
+						  {
+						    if (rptrFrequencies[i] != null)
+						    {
+						      m2 = new IRCMessage();
+						      m2.command = "PRIVMSG";
+						      m2.numParams = 2;
+						      m2.params[0] = currentServer;
+						      m2.params[1] = "IRCDDB QRG: " + rptrFrequencies[i];
+						      q = getSendQ();
+						      if (q != null)
+						      {
+							      q.putMessage(m2);
+						      }
+						    }
+						  }
+						}
+
 
 						if (extApp != null)
 						{
