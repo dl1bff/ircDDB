@@ -169,8 +169,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	  if ((latitude != 0.0) || (longitude != 0.0))
 	  {
-	    String desc1 = properties.getProperty("rptr_pos_text1", "").trim().replaceAll("[^a-zA-Z0-9 -+&(),./']", "");
-	    String desc2 = properties.getProperty("rptr_pos_text2", "").trim().replaceAll("[^a-zA-Z0-9 -+&(),./']", "");
+	    String desc1 = properties.getProperty("rptr_pos_text1", "").trim().replaceAll("[^a-zA-Z0-9 +&(),./'-]", "");
+	    String desc2 = properties.getProperty("rptr_pos_text2", "").trim().replaceAll("[^a-zA-Z0-9 +&(),./'-]", "");
 	    
 	    while (desc1.length() < 20)
 	    {
@@ -182,8 +182,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	      desc2 = desc2 + " ";
 	    }
 
-	    rptrLocation = String.format("%1$+09.5f %2$+010.5f %3$s %4$s", latitude, longitude,
-		desc1.substring(0,20).replace(' ', '_'), desc2.substring(0,20).replace(' ', '_'));
+	    rptrLocation = String.format("%1$+09.5f %2$+010.5f", latitude, longitude).replace(',', '.') +
+		" " + desc1.substring(0,20).replace(' ', '_') +
+		" " + desc2.substring(0,20).replace(' ', '_');
 
 	    String modules[] = { "A", "B", "C", "D", "AD" };
 
@@ -200,7 +201,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	      if ((freq > 1.0) && (range > 0.0))
 	      {
-		rptrFrequencies[i] = String.format("%1$s %2$011.5f %3$+010.5f %4$010.5f", modules[i],  freq, shift, range);
+		rptrFrequencies[i] = String.format("%1$s %2$011.5f %3$+010.5f %4$010.5f", modules[i],  freq, shift, range).replace(',', '.');
 	      }
 	      else
 	      {
