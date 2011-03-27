@@ -42,14 +42,21 @@ public interface IRCDDBExtApp extends IRCApplication, Runnable
 	{
 		public boolean keyWasNew;
 		public boolean hideFromLog;
+		public String modifiedLogLine;
 		public DatabaseObject newObj;
 		public DatabaseObject oldObj;
+
+		public UpdateResult()
+		{
+		  hideFromLog = true;
+		  modifiedLogLine = null;
+		}
 	}
 
 	public boolean setParams( Properties p,  int numberOfTables,
 		Pattern[] keyPattern, Pattern[] valuePattern );
 
-	public UpdateResult dbUpdate( int tableID, Date d, String key, String value, String ircUser );
+	public UpdateResult dbUpdate( int tableID, Date d, String key, String value, String ircUser, String msg );
 
 	public LinkedList<DatabaseObject> getDatabaseObjects( 
 		int tableID, Date beginDate, int numberOfObjects );

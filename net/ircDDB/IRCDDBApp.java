@@ -389,7 +389,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	}
 	
 
-	IRCDDBExtApp.UpdateResult processUpdate ( int tableID, Scanner s, String ircUser )
+	IRCDDBExtApp.UpdateResult processUpdate ( int tableID, Scanner s, String ircUser, String msg )
 	{
 		if (s.hasNext(datePattern))
 		{
@@ -422,7 +422,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 						if (extApp != null)
 						{
-							return extApp.dbUpdate( tableID, dbDate, key, value, ircUser );
+							return extApp.dbUpdate( tableID, dbDate, key, value, ircUser, msg );
 						}
 					}
 				}
@@ -446,7 +446,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
                         Scanner s = new Scanner(msg);
 
-			processUpdate(i, s, null);
+			processUpdate(i, s, null, null);
 		}
 	  }
 	}
@@ -478,7 +478,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			{
 				if (acceptPublicUpdates)
 				{
-					processUpdate(tableID, s, null); 
+					processUpdate(tableID, s, null, null); 
 				}
 				else
 				{
@@ -606,7 +606,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		  tableID = s.nextInt();
 		  if ((tableID < 0) || (tableID >= numberOfTables))
 		  {
-		    Dbg.println(Dbg.WARN, "invalid table ID " + tableID);
+		    Dbg.println(Dbg.DBG1, "invalid table ID " + tableID);
 		    return;
 		  }
 		}
@@ -618,7 +618,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			if (s.hasNext(datePattern)  &&
 				(other != null))
 			{
-				IRCDDBExtApp.UpdateResult result = processUpdate(tableID, s, other.nick);
+				IRCDDBExtApp.UpdateResult result = processUpdate(tableID, s, other.nick, msg);
 				
 				if (result != null)
 				{
@@ -722,20 +722,20 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 					  if (extApp != null)
 					  {
-					    extApp.dbUpdate( 2, result.newObj.modTime, result.newObj.key, setPriv, myNick );
+					    extApp.dbUpdate( 2, result.newObj.modTime, result.newObj.key, setPriv, myNick, null );
 					  }
 
 				       }
 				     }
 
-				     if ((debugChannel != null) && (result.hideFromLog == false)
+				     if ((debugChannel != null) && (result.modifiedLogLine != null)
 					  && (privCommand == null))
 				     {
 				       IRCMessage m2 = new IRCMessage();
 				       m2.command = "PRIVMSG";
 				       m2.numParams = 2;
 				       m2.params[0] = debugChannel;
-				       m2.params[1] = m.getPrefixNick() + ": UPDATE OK: " + msg;
+				       m2.params[1] = m.getPrefixNick() + ": UPDATE OK: " + result.modifiedLogLine;
 
 				       IRCMessageQueue q = getSendQ();
 				       if (q != null)
