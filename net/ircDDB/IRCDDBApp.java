@@ -164,6 +164,8 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	  numberOfTablesToSync = Integer.parseInt(properties.getProperty("ddb_num_tables_sync", "2"));
 
+	  try
+	  {
 	  double latitude = Double.parseDouble(properties.getProperty("rptr_pos_latitude", "0"));
 	  double longitude = Double.parseDouble(properties.getProperty("rptr_pos_longitude", "0"));
 
@@ -186,7 +188,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		" " + desc1.substring(0,20).replace(' ', '_') +
 		" " + desc2.substring(0,20).replace(' ', '_');
 
-	    String modules[] = { "A", "B", "C", "D", "AD" };
+	    String modules[] = { "A", "B", "C", "D", "AD", "BD", "CD", "DD" };
 
 	    numRptrFreq = modules.length;
 
@@ -211,6 +213,13 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	  }
 
+	  }
+	  catch (NumberFormatException e)
+	  {
+	    rptrFrequencies = null;
+	    numRptrFreq = 0;
+	    Dbg.println(Dbg.ERR, "NumberFormatException in rptr QTH/QRG" );
+	  }
 	  
 
 	}
