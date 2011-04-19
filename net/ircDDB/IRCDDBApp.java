@@ -478,7 +478,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 			  tableID = s.nextInt();
 			  if ((tableID < 0) || (tableID >= numberOfTables))
 			  {
-			    Dbg.println(Dbg.INFO, "invalid table ID " + tableID);
+			    Dbg.println(Dbg.DBG1, "invalid table ID " + tableID);
 			    return;
 			  }
 			}
