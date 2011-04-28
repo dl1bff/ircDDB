@@ -101,6 +101,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	String rptrLocation;
 	String[] rptrFrequencies;
 	int numRptrFreq;
+	String rptrInfoURL;
 
 	
 	IRCDDBApp(int numTables, Pattern[] k, Pattern[] v, String u_chan, String dbg_chan,
@@ -156,6 +157,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		rptrLocation = null;
 		rptrFrequencies = null;
 		numRptrFreq = 0;
+		rptrInfoURL = null;
 	}
 
 	void setParams( Properties p )
@@ -164,8 +166,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 	  numberOfTablesToSync = Integer.parseInt(properties.getProperty("ddb_num_tables_sync", "2"));
 
+	  rptrInfoURL = properties.getProperty("rptr_info_url", "").trim().replaceAll("[^\\p{Graph}]", "");
+
 	  try
 	  {
+
 	  double latitude = Double.parseDouble(properties.getProperty("rptr_pos_latitude", "0"));
 	  double longitude = Double.parseDouble(properties.getProperty("rptr_pos_longitude", "0"));
 
@@ -173,6 +178,9 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	  {
 	    String desc1 = properties.getProperty("rptr_pos_text1", "").trim().replaceAll("[^a-zA-Z0-9 +&(),./'-]", "");
 	    String desc2 = properties.getProperty("rptr_pos_text2", "").trim().replaceAll("[^a-zA-Z0-9 +&(),./'-]", "");
+	    String rangeUnit = properties.getProperty("rptr_range_unit", "mile").trim().toLowerCase();
+	    String haatUnit = properties.getProperty("rptr_haat_unit", "meter").trim().toLowerCase();
+
 	    
 	    while (desc1.length() < 20)
 	    {
@@ -200,10 +208,26 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	      double freq = Double.parseDouble(properties.getProperty("rptr_freq_" + modules[i] , "0"));
 	      double shift = Double.parseDouble(properties.getProperty("rptr_duplex_shift_" + modules[i] , "0"));
 	      double range = Double.parseDouble(properties.getProperty("rptr_range_" + modules[i] , "0"));
+	      double haat = Double.parseDouble(properties.getProperty("rptr_haat_" + modules[i] , "0"));
 
 	      if ((freq > 1.0) && (range > 0.0))
 	      {
-		rptrFrequencies[i] = String.format("%1$s %2$011.5f %3$+010.5f %4$010.5f", modules[i],  freq, shift, range).replace(',', '.');
+		if (rangeUnit.equals("meter") || rangeUnit.equals("meters"))
+		{
+		  range /= 1609.344;
+		}
+		else if (rangeUnit.equals("km") || rangeUnit.equals("kilometer"))
+		{
+		  range /= 1.609344;
+		}
+
+		if (haatUnit.equals("feet") || haatUnit.equals("foot"))
+		{
+		  haat *= 0.3048;
+		}
+
+		rptrFrequencies[i] = String.format("%1$s %2$011.5f %3$+010.5f %4$06.2f %5$06.1f",
+		      modules[i],  freq, shift, range, haat).replace(',', '.');
 	      }
 	      else
 	      {
@@ -1105,6 +1129,20 @@ public class IRCDDBApp implements IRCApplication, Runnable
 							      q.putMessage(m2);
 						      }
 						    }
+						  }
+						}
+
+						if ((rptrInfoURL != null) && (rptrInfoURL.length() > 0))
+						{
+						  m2 = new IRCMessage();
+						  m2.command = "PRIVMSG";
+						  m2.numParams = 2;
+						  m2.params[0] = currentServer;
+						  m2.params[1] = "IRCDDB URL: " + rptrInfoURL;
+						  q = getSendQ();
+						  if (q != null)
+						  {
+							  q.putMessage(m2);
 						  }
 						}
 
