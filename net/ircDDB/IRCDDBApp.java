@@ -179,7 +179,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	    String desc1 = properties.getProperty("rptr_pos_text1", "").trim().replaceAll("[^a-zA-Z0-9 +&(),./'-]", "");
 	    String desc2 = properties.getProperty("rptr_pos_text2", "").trim().replaceAll("[^a-zA-Z0-9 +&(),./'-]", "");
 	    String rangeUnit = properties.getProperty("rptr_range_unit", "mile").trim().toLowerCase();
-	    String haatUnit = properties.getProperty("rptr_haat_unit", "meter").trim().toLowerCase();
+	    String aglUnit = properties.getProperty("rptr_agl_unit", "meter").trim().toLowerCase();
 
 	    
 	    while (desc1.length() < 20)
@@ -208,7 +208,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	      double freq = Double.parseDouble(properties.getProperty("rptr_freq_" + modules[i] , "0"));
 	      double shift = Double.parseDouble(properties.getProperty("rptr_duplex_shift_" + modules[i] , "0"));
 	      double range = Double.parseDouble(properties.getProperty("rptr_range_" + modules[i] , "0"));
-	      double haat = Double.parseDouble(properties.getProperty("rptr_haat_" + modules[i] , "0"));
+	      double agl = Double.parseDouble(properties.getProperty("rptr_agl_" + modules[i] , "0"));
 
 	      if ((freq > 1.0) && (range > 0.0))
 	      {
@@ -221,13 +221,13 @@ public class IRCDDBApp implements IRCApplication, Runnable
 		  range /= 1.609344;
 		}
 
-		if (haatUnit.equals("feet") || haatUnit.equals("foot"))
+		if (aglUnit.equals("feet") || aglUnit.equals("foot"))
 		{
-		  haat *= 0.3048;
+		  agl *= 0.3048;
 		}
 
 		rptrFrequencies[i] = String.format("%1$s %2$011.5f %3$+010.5f %4$06.2f %5$06.1f",
-		      modules[i],  freq, shift, range, haat).replace(',', '.');
+		      modules[i],  freq, shift, range, agl).replace(',', '.');
 	      }
 	      else
 	      {
