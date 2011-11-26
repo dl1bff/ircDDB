@@ -1344,24 +1344,36 @@ public class IRCDDBApp implements IRCApplication, Runnable
 
 				try
 				{
-					PrintWriter p = new PrintWriter(
-						new FileOutputStream(dumpUserDBFileName));
+				  StringBuffer sb = new StringBuffer();
 
-					Collection<UserObject> c = user.values();
+				  synchronized (user)
+				  {
+				    Collection<UserObject> c = user.values();
 
-					for (UserObject o : c)
-					{
-						p.println(o.nick + " " + o.name +
-							" " + o.host + " " + o.op);
-					}
+				    for (UserObject o : c)
+				    {
+				      sb.append( o.nick + " " + o.name +
+							  " " + o.host + " " + o.op + "\n");
+				    }
+				  }
 
-					p.close();
+				  PrintWriter p = new PrintWriter(
+					  new FileOutputStream(dumpUserDBFileName));
+
+				  p.print(sb.toString());
+
+				  p.close();
 
 
 				}
 				catch (IOException e)
 				{
-					Dbg.println(Dbg.WARN, "dumpDb failed " + e);
+					Dbg.println(Dbg.WARN, "dumpUser failed " + e);
+				}
+				catch (java.util.ConcurrentModificationException e)
+				{
+					Dbg.println(Dbg.WARN, "dumpUser failed " + e);
+					dumpUserDBTimer = 3; // try again
 				}
 
 			}
