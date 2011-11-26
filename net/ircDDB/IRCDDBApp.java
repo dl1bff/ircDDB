@@ -702,9 +702,11 @@ public class IRCDDBApp implements IRCApplication, Runnable
 					}
 
 				     String privCommand = null;
+				     boolean isSTNCall = false;
 				     
 				     if (tableID == 0)
 				     {
+				       isSTNCall =  result.newObj.key.startsWith("STN"); 
 				       privCommand = checkPrivCommand (msg);
 				     }
 
@@ -762,7 +764,7 @@ public class IRCDDBApp implements IRCApplication, Runnable
 				     }
 
 				     if ((debugChannel != null) && (result.modifiedLogLine != null)
-					  && (privCommand == null))
+					  && (privCommand == null) && ( ! isSTNCall) )
 				     {
 				       IRCMessage m2 = new IRCMessage();
 				       m2.command = "PRIVMSG";
