@@ -379,26 +379,29 @@ public class IRCDDBApp implements IRCApplication, Runnable
 	{
 		boolean found = false;
 		
-		Collection<UserObject> v = user.values();
-		
-		Iterator<UserObject> i = v.iterator();
-		
-		while (i.hasNext())
+		synchronized (user)
 		{
-			UserObject u = i.next();
-			
-			// System.out.println("LIST: " + u.nick + " " + u.op);
-			
-			if (u.nick.startsWith("s-") && u.op && !myNick.equals(u.nick))
-			{
-				currentServer = u.nick;
-				found = true;
-				if (extApp != null) 
-				{
-					extApp.setCurrentServerNick(currentServer);
-				}
-				break;
-			}
+		    Collection<UserObject> v = user.values();
+		    
+		    Iterator<UserObject> i = v.iterator();
+		    
+		    while (i.hasNext())
+		    {
+			    UserObject u = i.next();
+			    
+			    // System.out.println("LIST: " + u.nick + " " + u.op);
+			    
+			    if (u.nick.startsWith("s-") && u.op && !myNick.equals(u.nick))
+			    {
+				    currentServer = u.nick;
+				    found = true;
+				    if (extApp != null) 
+				    {
+					    extApp.setCurrentServerNick(currentServer);
+				    }
+				    break;
+			    }
+		    }
 		}
 		
 		return found;
