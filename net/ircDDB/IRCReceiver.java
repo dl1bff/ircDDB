@@ -47,20 +47,32 @@ public class IRCReceiver implements Runnable
 	public void run()
 	{
 
-	DataInputStream d = new DataInputStream(is);
+	// DataInputStream d = new DataInputStream(is);
 
 	IRCMessage m = new IRCMessage();
 
 	int state = 0;
 
+	byte[]  bb = new byte[1000];
 
 	while (true)
 	{
 		byte b;
+		int res;
 
 		try
 		{
-			b = d.readByte();
+			// b = d.readByte();
+			res = is.read(bb);
+
+			if (res <= 0)
+			{
+				Dbg.println(Dbg.INFO, "IRCClient/readByte EOF2");
+				q.signalEOF();
+	                        return;
+			}
+
+			// b = bb[0];
 		}
 		catch (EOFException e)
 		{
@@ -74,6 +86,14 @@ public class IRCReceiver implements Runnable
 			q.signalEOF();
 			return;
 		}
+
+		// Dbg.println(Dbg.INFO, "IRCClient/input " + res);
+
+		int i;
+
+		for (i=0; i < res; i++)
+		{
+		b = bb[i];
 
 
 		if (b > 0)
@@ -161,6 +181,8 @@ public class IRCReceiver implements Runnable
 		}
 
 		}
+
+		} /* for */
 	}
 		
 		

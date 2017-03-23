@@ -110,6 +110,8 @@ class IRCProtocol
 		{
 			timer --;
 		}
+
+		// System.out.println("timer = " + timer);
 		
 		while (recvQ.messageAvailable())
 		{
